@@ -16,13 +16,13 @@ What's more, they are all treeshakable.
 
 ## Customizable Themes
 
-We provide an advanced type safe theme system that built with typescript. All you need is to provide a theme overrides object in JS. Then all the staff is done by us.
+We provide an advanced type safe theme system that built with typescript. All you need is to provide a theme overrides object in JS. Then all the stuffs will be done by us.
 
 What's more, no less/sass/css variables, no webpack loaders are required. And you can try the theme editor on the bottom right of the page.
 
-## Uses Typescript
+## Uses TypeScript
 
-All the staff in Naive UI is wrote in Typescript. It can work with your typescript project seamlessly.
+All the staff in Naive UI is wrote in TypeScript. It can work with your typescript project seamlessly.
 
 What's more, you don't need to import any CSS to use the components.
 

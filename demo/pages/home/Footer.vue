@@ -10,7 +10,7 @@
       <div class="footer-links-col">
         <n-text depth="1" class="col-header">{{ t('resources') }}</n-text>
         <n-button disabled text>{{ t('designResources') }}</n-button>
-        <n-button text tag="a" target="_blank" href="https://xicons.org">{{
+        <n-button text tag="a" target="_blank" href="https://www.xicons.org">{{
           t('icons')
         }}</n-button>
       </div>
@@ -34,7 +34,7 @@
       <div class="footer-links-col">
         <n-text depth="1" class="col-header">{{ t('community') }}</n-text>
         <n-button text tag="a" target="_blank" :href="repoUrl">
-          Github
+          GitHub
         </n-button>
         <n-button
           text
@@ -67,7 +67,7 @@
     </div>
     <n-divider class="footer-divider" />
     <div style="text-align: center; padding: 20px">
-      <n-text depth="3">Naive UI {{ version }} · Made by Tusimple</n-text>
+      <n-text depth="3">Naive UI {{ version }} · Made by TuSimple</n-text>
     </div>
   </n-layout-footer>
 </template>

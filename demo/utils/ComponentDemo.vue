@@ -14,7 +14,7 @@
       </span>
     </template>
     <template #header-extra>
-      <n-tooltip trigger="hover" :placement="'top'" :show-arrow="true">
+      <n-tooltip>
         <template #trigger>
           <edit-in-code-sandbox-button
             style="padding: 0; margin-right: 6px"
@@ -24,7 +24,7 @@
         </template>
         {{ t('editInCodeSandbox') }}
       </n-tooltip>
-      <n-tooltip trigger="hover" :placement="'top'" :show-arrow="true">
+      <n-tooltip>
         <template #trigger>
           <edit-on-github-button
             depth="3"
@@ -35,12 +35,19 @@
         </template>
         {{ t('editOnGithub') }}
       </n-tooltip>
-      <n-tooltip
-        ref="expandCodeButtonRef"
-        trigger="hover"
-        :placement="'top'"
-        :show-arrow="true"
-      >
+      <n-tooltip>
+        <template #trigger>
+          <copy-code-button
+            depth="3"
+            style="padding: 0; margin-right: 6px"
+            size="tiny"
+            :code="sfcCode"
+            :success-text="t('copySuccess')"
+          />
+        </template>
+        {{ t('copyCode') }}
+      </n-tooltip>
+      <n-tooltip ref="expandCodeButtonRef">
         <template #trigger>
           <n-button
             style="padding: 0"
@@ -75,13 +82,15 @@ import { CodeOutline } from '@vicons/ionicons5'
 import { useDisplayMode } from '../store'
 import { i18n } from '../utils/composables'
 import EditOnGithubButton from './EditOnGithubButton.vue'
-import editInCodeSandboxButton from './EditInCodeSandboxButton.vue'
+import EditInCodeSandboxButton from './EditInCodeSandboxButton.vue'
+import CopyCodeButton from './CopyCodeButton.vue'
 
 export default {
   components: {
     CodeOutline,
     EditOnGithubButton,
-    editInCodeSandboxButton
+    EditInCodeSandboxButton,
+    CopyCodeButton
   },
   props: {
     title: {
@@ -129,14 +138,18 @@ export default {
         'zh-CN': {
           show: '显示代码',
           hide: '收起代码',
-          editOnGithub: '在 Github 中编辑',
-          editInCodeSandbox: '在 CodeSandbox 中编辑'
+          editOnGithub: '在 GitHub 中编辑',
+          editInCodeSandbox: '在 CodeSandbox 中编辑',
+          copyCode: '复制代码',
+          copySuccess: '复制成功'
         },
         'en-US': {
           show: 'Show Code',
           hide: 'Hide Code',
-          editOnGithub: 'Edit on Github',
-          editInCodeSandbox: 'Edit in CodeSandbox'
+          editOnGithub: 'Edit on GitHub',
+          editInCodeSandbox: 'Edit in CodeSandbox',
+          copyCode: 'Copy Code',
+          copySuccess: 'Successfully Copied'
         }
       })
     }

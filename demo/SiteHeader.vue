@@ -51,7 +51,7 @@
         {{ themeLabelMap[theme] }}
       </n-button>
       <n-button tag="a" text class="nav-picker" :href="repoUrl" target="_blank">
-        Github
+        GitHub
       </n-button>
       <n-text class="nav-picker">
         {{ version }}
@@ -126,7 +126,7 @@ const locales = {
     common: 'Common',
     debug: 'Debug',
     alreadyHome: 'You are already in home page. No clicking anymore.',
-    tusimpleTheme: 'Tusimple Theme',
+    tusimpleTheme: 'TuSimple Theme',
     defaultTheme: 'Default Theme'
   }
 }
@@ -220,7 +220,7 @@ export default {
         },
         {
           key: 'github',
-          title: 'Github'
+          title: 'GitHub'
         }
       ]
     })
