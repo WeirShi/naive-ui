@@ -7,14 +7,17 @@
 ```
 
 ```js
-export default {
-  data () {
+import { defineComponent, ref } from 'vue'
+
+export default defineComponent({
+  setup () {
     return {
-      value: null,
+      value: ref(null),
       options: [
         {
           type: 'group',
-          name: 'Rubber Soul',
+          label: 'Rubber Soul',
+          key: 'Rubber Soul',
           children: [
             {
               label:
@@ -76,7 +79,8 @@ export default {
         },
         {
           type: 'group',
-          name: 'Let It Be',
+          label: 'Let It Be',
+          key: 'Let It Be Album',
           children: [
             {
               label: 'Two Of Us',
@@ -131,5 +135,5 @@ export default {
       ]
     }
   }
-}
+})
 ```

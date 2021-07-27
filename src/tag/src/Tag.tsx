@@ -8,6 +8,7 @@ import { tagLight } from '../styles'
 import type { TagTheme } from '../styles'
 import commonProps from './common-props'
 import style from './styles/index.cssr'
+import useRtl from '../../_mixins/use-rtl'
 
 export interface TagPublicMethods {
   setTextContent: (textContent: string) => void
@@ -23,27 +24,15 @@ const tagProps = {
     type: Boolean as PropType<boolean | undefined>,
     default: undefined
   },
-  checked: {
-    type: Boolean,
-    default: false
-  },
-  checkable: {
-    type: Boolean,
-    default: false
-  },
-  onClose: [Array, Function] as PropType<MaybeArray<() => void>>,
+  checked: Boolean,
+  checkable: Boolean,
+  onClose: [Array, Function] as PropType<MaybeArray<(e: MouseEvent) => void>>,
   onMouseenter: Function as PropType<(e: MouseEvent) => void>,
   onMouseleave: Function as PropType<(e: MouseEvent) => void>,
-  // eslint-disable-next-line vue/prop-name-casing
-  'onUpdate:checked': {
-    type: Function,
-    default: undefined
-  },
+  'onUpdate:checked': Function as PropType<(checked: boolean) => void>,
+  onUpdateChecked: Function as PropType<(checked: boolean) => void>,
   // private
-  internalStopClickPropagation: {
-    type: Boolean,
-    default: false
-  },
+  internalStopClickPropagation: Boolean,
   // deprecated
   onCheckedChange: {
     type: Function as PropType<(checked: boolean) => void>,
@@ -67,7 +56,8 @@ export default defineComponent({
   props: tagProps,
   setup (props) {
     const contentRef = ref<HTMLElement | null>(null)
-    const { mergedBorderedRef, mergedClsPrefixRef } = useConfig(props)
+    const { mergedBorderedRef, mergedClsPrefixRef, NConfigProvider } =
+      useConfig(props)
     const themeRef = useTheme(
       'Tag',
       'Tag',
@@ -82,9 +72,11 @@ export default defineComponent({
           const {
             checked,
             onCheckedChange,
-            'onUpdate:checked': onUpdateChecked
+            onUpdateChecked,
+            'onUpdate:checked': _onUpdateChecked
           } = props
           if (onUpdateChecked) onUpdateChecked(!checked)
+          if (_onUpdateChecked) _onUpdateChecked(!checked)
           // deprecated
           if (onCheckedChange) onCheckedChange(!checked)
         }
@@ -96,7 +88,7 @@ export default defineComponent({
       }
       if (!props.disabled) {
         const { onClose } = props
-        if (onClose) call(onClose)
+        if (onClose) call(onClose, e)
       }
     }
     const tagPublicMethods: TagPublicMethods = {
@@ -105,8 +97,14 @@ export default defineComponent({
         if (value) value.textContent = textContent
       }
     }
+    const rtlEnabledRef = useRtl(
+      'Tag',
+      NConfigProvider?.mergedRtlRef,
+      mergedClsPrefixRef
+    )
     return {
       ...tagPublicMethods,
+      rtlEnabled: rtlEnabledRef,
       mergedClsPrefix: mergedClsPrefixRef,
       contentRef,
       mergedBordered: mergedBorderedRef,
@@ -119,6 +117,7 @@ export default defineComponent({
           self: {
             padding,
             closeMargin,
+            closeMarginRtl,
             borderRadius,
             opacityDisabled,
             textColorCheckable,
@@ -150,6 +149,7 @@ export default defineComponent({
           '--close-color-hover': closeColorHover,
           '--close-color-pressed': closeColorPressed,
           '--close-margin': closeMargin,
+          '--close-margin-rtl': closeMarginRtl,
           '--close-size': closeSize,
           '--color': color,
           '--color-checkable': colorCheckable,
@@ -172,12 +172,13 @@ export default defineComponent({
     }
   },
   render () {
-    const { mergedClsPrefix } = this
+    const { mergedClsPrefix, rtlEnabled } = this
     return (
       <div
         class={[
           `${mergedClsPrefix}-tag`,
           {
+            [`${mergedClsPrefix}-tag--rtl`]: rtlEnabled,
             [`${mergedClsPrefix}-tag--disabled`]: this.disabled,
             [`${mergedClsPrefix}-tag--checkable`]: this.checkable,
             [`${mergedClsPrefix}-tag--checked`]: this.checkable && this.checked,

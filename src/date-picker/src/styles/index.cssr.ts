@@ -59,15 +59,11 @@ export default c([
   `, [
     cB('date-picker-icon', `
       color: var(--icon-color);
-      opacity: var(--icon-alpha);
-      transition:
-        color .3s var(--bezier),
-        opacity .3s var(--bezier);
+      transition: color .3s var(--bezier);
     `),
     cM('disabled', [
       cB('date-picker-icon', `
         color: var(--icon-color-disabled);
-        opacity: var(--icon-alpha-disabled);
       `)
     ])
   ]),
@@ -96,12 +92,14 @@ export default c([
     cM('date', {
       gridTemplateAreas: `
         "left-calendar"
+        "footer"
         "action"
       `
     }),
     cM('daterange', {
       gridTemplateAreas: `
         "left-calendar divider right-calendar"
+        "footer footer footer"
         "action action action"
       `
     }),
@@ -109,6 +107,7 @@ export default c([
       gridTemplateAreas: `
         "header"
         "left-calendar"
+        "footer"
         "action"
       `
     }),
@@ -116,14 +115,18 @@ export default c([
       gridTemplateAreas: `
         "header header header"
         "left-calendar divider right-calendar"
+        "footer footer footer"
         "action action action"
       `
     }),
-    cB('date-panel-header', {
-      gridArea: 'header'
+    cB('date-panel-footer', {
+      gridArea: 'footer'
     }),
     cB('date-panel-actions', {
       gridArea: 'action'
+    }),
+    cB('date-panel-header', {
+      gridArea: 'header'
     }),
     cB('date-panel-header', `
       box-sizing: border-box;
@@ -329,6 +332,10 @@ export default c([
       width: 1px;
       background-color: var(--calendar-divider-color);
     `),
+    cB('date-panel-footer', {
+      borderTop: '1px solid var(--panel-action-divider-color)',
+      padding: 'var(--panel-extra-footer-padding)'
+    }),
     cB('date-panel-actions', `
       flex: 1;
       padding: var(--panel-action-padding);

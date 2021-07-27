@@ -9,7 +9,8 @@ No Food.
 ```demo
 horizontal
 select
-default-expanded-names
+render-label
+default-expanded-keys
 indent
 collapse
 inverted
@@ -25,15 +26,19 @@ long-label
 | collapsed-icon-size | `number` | `24` | The icon size when menu is collapsed. If not set, menu will use `icon-size` in place of it. |
 | collapsed-width | `number` | `48` | The menu width after collapsed. |
 | collapsed | `boolean` | `false` | The collapsed status of menu, only works when menu is vertical. |
-| default-expand-all | `boolean` | `false` |  |
+| default-expand-all | `boolean` | `false` | Whether to expand all menus. |
 | default-expanded-keys | `Array<string>` | `[]` | The default expanded submenu keys of menu in uncontrolled manner. |
-| default-value | `string \| null` | `null` |  |
+| default-value | `string \| null` | `null` | Whether selected by default in uncontrolled mode. |
+| dropdown-placement | `'top-start' \| 'top' \| 'top-end' \| 'right-start' \| 'right' \| 'right-end' \| 'bottom-start' \| 'bottom' \| 'bottom-end' \| 'left-start' \| 'left' \| 'left-end' \| ` | `'top'` | Only effective in horizontal mode. |
 | expanded-keys | `Array<string>` | `undefined` | The expanded submenu keys. If set, menu will work in controlled manner and `default-expanded-names` won't work. |
+| expand-icon | `(option: MenuOption) => VNodeChild` | `undefined` | Render function that renders all expand icon. |
 | icon-size | `number` | `20` | The icon size when menu is not collapsed. |
 | indent | `number` | `32` | The indent of menu. |
 | inverted | `boolean` | `false` | Use inverted style. |
-| options | `Array<MenuOption \| Submenu \| MenuOptionGroup>` | `[]` | Items data of menu. |
-| mode | `'vertical' \| 'horizontal'` | `'vertical'` |  |
+| options | `Array<MenuOption \| MenuOptionGroup>` | `[]` | Items data of menu. |
+| mode | `'vertical' \| 'horizontal'` | `'vertical'` | Menu layout. |
+| render-icon | `(option: MenuOption) => VNodeChild` | `undefined` | Render function that renders all icons. |
+| render-label | `(option: MenuOption \| MenuGroupOption) => VNodeChild` | `undefined` | Render function that renders all labels. |
 | root-indent | `number` | `undefined` | The indent of menu's first level children. If not set, menu will use `indent` in place of it. |
 | value | `string \| null` | `undefined` | The selected name of menu. |
 | on-update:expanded-keys | `(keys: string[]) => void` | `undefined` | `keys` is the array of expanded menu options' `key`. |
@@ -43,28 +48,18 @@ long-label
 
 | Name | Type | Description |
 | --- | --- | --- |
-| disabled? | `boolean` |  |
-| extra? | `string \| (() => VNodeChild)` |  |
-| icon? | `() => VNodeChild` |  |
+| children? | `Array<MenuOption \| MenuOptionGroup>` | Child menu options. |
+| disabled? | `boolean` | Whether to disable the menu item. |
+| extra? | `string \| (() => VNodeChild)` | The extra parts of the menu item. |
+| icon? | `() => VNodeChild` | The icon for the menu item. |
 | key | `string` | The indentifier of the menu item. |
-| label | `string \| (() => VNodeChild)` |  |
-
-### Submenu Properties
-
-| Name | Type | Description |
-| --- | --- | --- |
-| children | `Array<MenuOption \| Submenu \| MenuOptionGroup>` |  |
-| disabled? | `boolean` |  |
-| extra? | `string \| (() => VNodeChild)` |  |
-| icon? | `() => VNodeChild` |  |
-| key | `string` | The indentifier of the submenu. |
-| label | `string \| (() => VNodeChild)` |  |
+| label | `string \| (() => VNodeChild)` | The label of the menu item. |
 
 ### MenuOptionGroup Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| children | `Array<MenuOption \| Submenu \| MenuOptionGroup>` | **required** |
+| children | `Array<MenuOption \| MenuOptionGroup>` | Group items. **required!** |
 | key | `string` | The indentifier of the menu group. |
-| label | `string \| (() => VNodeChild)` |  |
-| type | `'group'` | **required** |
+| label | `string \| (() => VNodeChild)` | The label of the menu item. |
+| type | `'group'` | The type of the menu item, **required!** |

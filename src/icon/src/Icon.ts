@@ -13,18 +13,9 @@ export default defineComponent({
   name: 'Icon',
   props: {
     ...(useTheme.props as ThemeProps<IconTheme>),
-    depth: {
-      type: [String, Number] as PropType<Depth>,
-      default: undefined
-    },
-    size: {
-      type: [Number, String],
-      default: undefined
-    },
-    color: {
-      type: String,
-      default: undefined
-    }
+    depth: [String, Number] as PropType<Depth>,
+    size: [Number, String],
+    color: String
   },
   setup (props) {
     const { mergedClsPrefixRef } = useConfig(props)
@@ -67,7 +58,7 @@ export default defineComponent({
   },
   render () {
     const { $parent, depth, mergedClsPrefix } = this
-    if ($parent?.$options._n_icon__) {
+    if ($parent?.$options?._n_icon__) {
       warn('icon', "don't wrap `n-icon` inside `n-icon`")
     }
     return h(

@@ -45,24 +45,15 @@ const paginationProps = {
     type: Number,
     default: 1
   },
-  showSizePicker: {
-    type: Boolean,
-    default: false
-  },
+  showSizePicker: Boolean,
   pageSize: Number as PropType<number>,
   defaultPageSize: Number,
   pageSizes: {
     type: Array as PropType<number[]>,
     default: () => [10]
   },
-  showQuickJumper: {
-    type: Boolean,
-    default: false
-  },
-  disabled: {
-    type: Boolean,
-    default: false
-  },
+  showQuickJumper: Boolean,
+  disabled: Boolean,
   pageSlot: {
     type: Number,
     default: 9
@@ -134,7 +125,7 @@ export default defineComponent({
       // item count has high priority, for it can affect prefix slot rendering
       const { itemCount } = props
       if (itemCount !== undefined) {
-        return Math.ceil(itemCount / mergedPageSizeRef.value)
+        return Math.max(1, Math.ceil(itemCount / mergedPageSizeRef.value))
       }
       const { pageCount } = props
       if (pageCount !== undefined) return pageCount
@@ -166,7 +157,7 @@ export default defineComponent({
       return (mergedPageRef.value - 1) * mergedPageSizeRef.value
     })
     const endIndexRef = computed(() => {
-      const endIndex = mergedPageRef.value * mergedPageSizeRef.value
+      const endIndex = mergedPageRef.value * mergedPageSizeRef.value - 1
       const { itemCount } = props
       if (itemCount !== undefined) {
         return endIndex > itemCount ? itemCount : endIndex
@@ -237,7 +228,7 @@ export default defineComponent({
       doUpdatePageSize(value)
     }
     function handleQuickJumperKeyUp (e: KeyboardEvent): void {
-      if (e.code === 'Enter') {
+      if (e.code === 'Enter' || e.code === 'NumpadEnter') {
         const page = parseInt(jumperValueRef.value)
         if (
           !Number.isNaN(page) &&
@@ -267,28 +258,28 @@ export default defineComponent({
     function handlePageItemMouseEnter (pageItem: PageItem): void {
       if (props.disabled) return
       switch (pageItem.type) {
-        default:
-          return
         case 'fastBackward':
           showFastBackwardRef.value = true
           break
         case 'fastForward':
           showFastForwardRef.value = true
           break
+        default:
+          return
       }
       disableTransitionOneTick()
     }
     function handlePageItemMouseLeave (pageItem: PageItem): void {
       if (props.disabled) return
       switch (pageItem.type) {
-        default:
-          return
         case 'fastBackward':
           showFastBackwardRef.value = false
           break
         case 'fastForward':
           showFastForwardRef.value = false
           break
+        default:
+          return
       }
       disableTransitionOneTick()
     }
@@ -458,7 +449,7 @@ export default defineComponent({
         {prefix || $slots.prefix ? (
           <div class={`${mergedClsPrefix}-pagination-prefix`}>
             {($slots.prefix
-              ? (($slots.prefix as unknown) as RenderPrefix)
+              ? ($slots.prefix as unknown as RenderPrefix)
               : prefix!)({
               page: mergedPage,
               pageSize: mergedPageSize,
@@ -487,7 +478,8 @@ export default defineComponent({
               class={[
                 `${mergedClsPrefix}-pagination-item`,
                 {
-                  [`${mergedClsPrefix}-pagination-item--active`]: pageItem.active,
+                  [`${mergedClsPrefix}-pagination-item--active`]:
+                    pageItem.active,
                   [`${mergedClsPrefix}-pagination-item--disabled`]: disabled
                 }
               ]}
@@ -566,7 +558,7 @@ export default defineComponent({
         {suffix || $slots.suffix ? (
           <div class={`${mergedClsPrefix}-pagination-suffix`}>
             {($slots.suffix
-              ? (($slots.suffix as unknown) as RenderSuffix)
+              ? ($slots.suffix as unknown as RenderSuffix)
               : suffix!)({
               page: mergedPage,
               pageSize: mergedPageSize,

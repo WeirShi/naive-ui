@@ -135,9 +135,7 @@ export default defineComponent({
             </NIconSwitchTransition>
           </div>
           <div class={`${mergedClsPrefix}-message__content`}>
-            {h(render, {
-              render: content
-            })}
+            {render(content)}
           </div>
           {closable ? (
             <NBaseClose
@@ -165,7 +163,11 @@ function createIconVNode (
         {{
           default: () =>
             type === 'loading' ? (
-              <NBaseLoading clsPrefix={clsPrefix} scale={0.85} />
+              <NBaseLoading
+                clsPrefix={clsPrefix}
+                strokeWidth={24}
+                scale={0.85}
+              />
             ) : (
               iconMap[type]
             )

@@ -41,7 +41,8 @@ function useCalendar (
     isHourDisabledRef,
     isMinuteDisabledRef,
     isSecondDisabledRef,
-    localeRef
+    localeRef,
+    datePickerSlots
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   } = inject(datePickerInjectionKey)!
   const validation = {
@@ -181,12 +182,12 @@ function useCalendar (
   function clearSelectedDateTime (): void {
     panelCommon.doUpdateValue(null, true)
     dateInputValueRef.value = ''
-    panelCommon.doClose()
+    panelCommon.doClose(true)
   }
   function handleNowClick (): void {
     panelCommon.doUpdateValue(getTime(sanitizeValue(Date.now())), true)
     calendarValueRef.value = Date.now()
-    panelCommon.doClose()
+    panelCommon.doClose(true)
   }
   function handleDateClick (dateItem: DateItem): void {
     if (mergedIsDateDisabled(dateItem.ts)) {
@@ -268,7 +269,8 @@ function useCalendar (
     handleTimePickerChange,
     clearSelectedDateTime,
     timePickerSize: panelCommon.timePickerSize,
-    dateInputValue: dateInputValueRef
+    dateInputValue: dateInputValueRef,
+    datePickerSlots
   }
 }
 

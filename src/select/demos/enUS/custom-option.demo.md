@@ -1,43 +1,42 @@
 # Custom Option Render
 
-After a long time of consideration, I decide to drop slot API. However, there is still a way to render options as you like. (The example uses render functions, but you can also use the `style` or `class` prop on an `option`.)
+After a long time of consideration, I decide to drop slot API. However, there is still a way to render options as you like. (The example uses `render-label` prop, but you can also use the `style` or `class` prop on an `option`.)
 
 ```html
-<n-select v-model:value="value" :options="options" />
+<n-select :options="options" :render-label="renderLabel" />
 ```
 
 ```js
-import { h } from 'vue'
+import { defineComponent, h } from 'vue'
 import { NIcon } from 'naive-ui'
 import { MdMusicalNote as MusicIcon } from '@vicons/ionicons4'
 
-function render (option, selected) {
-  return [
-    h(
-      NIcon,
-      {
-        style: {
-          verticalAlign: 'middle',
-          marginRight: '4px'
-        }
-      },
-      {
-        default: () => h(MusicIcon)
-      }
-    ),
-    option.label
-  ]
-}
-
-export default {
-  data () {
+export default defineComponent({
+  setup () {
     return {
-      value: null,
+      renderLabel: (option) => {
+        if (option.type === 'group') return option.label + '(Cool!)'
+        return [
+          h(
+            NIcon,
+            {
+              style: {
+                verticalAlign: 'middle',
+                marginRight: '4px'
+              }
+            },
+            {
+              default: () => h(MusicIcon)
+            }
+          ),
+          option.label
+        ]
+      },
       options: [
         {
           type: 'group',
-          name: 'Rubber Soul',
-          render: (data) => [data.name, '(Cool!)'],
+          label: 'Rubber Soul',
+          key: 'Rubber Soul Album',
           children: [
             {
               label:
@@ -47,7 +46,10 @@ export default {
             },
             {
               label: 'Drive My Car',
-              value: 'song1'
+              value: 'song1',
+              style: {
+                color: 'red'
+              }
             },
             {
               label: 'Norwegian Wood',
@@ -95,15 +97,12 @@ export default {
               label: 'Wait',
               value: 'song12'
             }
-          ].map((v) => ({
-            ...v,
-            render
-          }))
+          ]
         },
         {
           type: 'group',
-          name: 'Let It Be',
-          render: (data) => [data.name, '(Cool!)'],
+          label: 'Let It Be',
+          key: 'Let It Be Album',
           children: [
             {
               label: 'Two Of Us',
@@ -153,13 +152,10 @@ export default {
               label: 'Get Back',
               value: 'Get Back'
             }
-          ].map((v) => ({
-            ...v,
-            render
-          }))
+          ]
         }
       ]
     }
   }
-}
+})
 ```

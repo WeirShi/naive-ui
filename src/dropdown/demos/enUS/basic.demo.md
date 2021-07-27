@@ -4,7 +4,7 @@ Basic usage of dropdown
 
 ```html
 <n-dropdown trigger="hover" @select="handleSelect" :options="options">
-  <n-button :keyboard="false"> Go For a Trip </n-button>
+  <n-button> Go For a Trip </n-button>
 </n-dropdown>
 ```
 
@@ -19,7 +19,8 @@ export default defineComponent({
       options: [
         {
           label: 'Marina Bay Sands',
-          key: 'marina bay sands'
+          key: 'marina bay sands',
+          disabled: true
         },
         {
           label: "Brown's Hotel, London",

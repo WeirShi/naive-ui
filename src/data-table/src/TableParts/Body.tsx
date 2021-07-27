@@ -7,7 +7,8 @@ import {
   VNode,
   watchEffect,
   onUnmounted,
-  PropType
+  PropType,
+  CSSProperties
 } from 'vue'
 import { pxfy, repeat } from 'seemly'
 import { VirtualList, VirtualListInst } from 'vueuc'
@@ -120,11 +121,12 @@ export default defineComponent({
       virtualScrollRef,
       componentId,
       scrollPartRef,
-      tableLayoutRef,
+      mergedTableLayoutRef,
       hasChildrenRef,
       firstContentfulColIndexRef,
       indentRef,
       rowPropsRef,
+      maxHeightRef,
       setHeaderScrollLeft,
       doUpdateExpandedRowKeys,
       handleTableBodyScroll,
@@ -211,20 +213,27 @@ export default defineComponent({
             )
         ])
     ])
+    let fixedStyleMounted = false
     watchEffect(() => {
       const { value: leftActiveFixedColKey } = leftActiveFixedColKeyRef
       const { value: rightActiveFixedColKey } = rightActiveFixedColKeyRef
-      if (leftActiveFixedColKey !== null || rightActiveFixedColKey !== null) {
-        style.mount({
-          id: `n-${componentId}`,
-          force: true,
-          props: {
-            leftActiveFixedColKey,
-            rightActiveFixedColKey,
-            componentId
-          }
-        })
+      if (
+        !fixedStyleMounted &&
+        leftActiveFixedColKey === null &&
+        rightActiveFixedColKey === null
+      ) {
+        return
       }
+      style.mount({
+        id: `n-${componentId}`,
+        force: true,
+        props: {
+          leftActiveFixedColKey,
+          rightActiveFixedColKey,
+          componentId
+        }
+      })
+      fixedStyleMounted = true
     })
     onUnmounted(() => {
       style.unmount({
@@ -251,11 +260,12 @@ export default defineComponent({
       hoverKey: hoverKeyRef,
       mergedSortState: mergedSortStateRef,
       virtualScroll: virtualScrollRef,
-      tableLayout: tableLayoutRef,
+      mergedTableLayout: mergedTableLayoutRef,
       hasChildren: hasChildrenRef,
       firstContentfulColIndex: firstContentfulColIndexRef,
       indent: indentRef,
       rowProps: rowPropsRef,
+      maxHeight: maxHeightRef,
       setHeaderScrollLeft,
       handleMouseenterTable,
       handleVirtualListScroll,
@@ -275,15 +285,28 @@ export default defineComponent({
       scrollX,
       mergedClsPrefix,
       virtualScroll,
+      maxHeight,
+      mergedTableLayout,
       onResize,
       setHeaderScrollLeft
     } = this
-    const contentStyle = {
-      minWidth: formatLength(scrollX)
+    const scrollable = scrollX !== undefined || maxHeight !== undefined
+
+    // For a basic table with auto layout whose content may overflow we will
+    // make it scrollable, which differs from browser's native behavior.
+    // For native behavior, see
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/table-layout
+    const isBasicAutoLayout = !scrollable && mergedTableLayout === 'auto'
+    const xScrollable = scrollX !== undefined || isBasicAutoLayout
+
+    const contentStyle: CSSProperties = {
+      minWidth: formatLength(scrollX) || '100%'
     }
+    if (scrollX) contentStyle.width = '100%'
     return (
       <NScrollbar
         ref="scrollbarInstRef"
+        scrollable={scrollable || isBasicAutoLayout}
         class={`${mergedClsPrefix}-data-table-base-table-body`}
         theme={mergedTheme.peers.Scrollbar}
         themeOverrides={mergedTheme.peerOverrides.Scrollbar}
@@ -292,9 +315,9 @@ export default defineComponent({
         content={virtualScroll ? this.virtualListContent : undefined}
         horizontalRailStyle={{ zIndex: 3 }}
         verticalRailStyle={{ zIndex: 3 }}
-        xScrollable
+        xScrollable={xScrollable}
         onScroll={virtualScroll ? undefined : this.handleTableBodyScroll}
-        privateOnSetSL={setHeaderScrollLeft}
+        internalOnUpdateScrollLeft={setHeaderScrollLeft}
         onResize={onResize}
       >
         {{
@@ -371,8 +394,6 @@ export default defineComponent({
 
             const { length: rowCount } = mergedData
 
-            let hasEllipsis = false
-
             const indentStyle = hasChildren
               ? { width: pxfy(this.indent) }
               : undefined
@@ -433,7 +454,6 @@ export default defineComponent({
                 }
                 const hoverKey = isCrossRowTd ? this.hoverKey : null
                 const { ellipsis } = column
-                if (!hasEllipsis && ellipsis) hasEllipsis = true
                 return (
                   <td
                     key={colKey}
@@ -460,7 +480,7 @@ export default defineComponent({
                       {
                         [`${mergedClsPrefix}-data-table-td--ellipsis`]:
                           ellipsis === true ||
-                          // don't add ellpisis class if tooltip exists
+                          // don't add ellipsis class if tooltip exists
                           (ellipsis && !ellipsis.tooltip),
                         [`${mergedClsPrefix}-data-table-td--selection`]:
                           column.type === 'selection',
@@ -475,28 +495,28 @@ export default defineComponent({
                   >
                     {hasChildren && colIndex === firstContentfulColIndex
                       ? [
-                        repeat(
-                          isSummary ? 0 : (rowInfo as TmNode).level,
-                          <div
-                            class={`${mergedClsPrefix}-data-table-indent`}
-                            style={indentStyle}
-                          />
-                        ),
-                        isSummary || !(rowInfo as TmNode).children ? (
-                          <div
-                            class={`${mergedClsPrefix}-data-table-expand-placeholder`}
-                          />
-                        ) : (
-                          <ExpandTrigger
-                            class={`${mergedClsPrefix}-data-table-expand-trigger`}
-                            clsPrefix={mergedClsPrefix}
-                            expanded={expanded}
-                            onClick={() => {
-                              handleUpdateExpanded(rowKey)
-                            }}
-                          />
-                        )
-                      ]
+                          repeat(
+                            isSummary ? 0 : (rowInfo as TmNode).level,
+                            <div
+                              class={`${mergedClsPrefix}-data-table-indent`}
+                              style={indentStyle}
+                            />
+                          ),
+                          isSummary || !(rowInfo as TmNode).children ? (
+                            <div
+                              class={`${mergedClsPrefix}-data-table-expand-placeholder`}
+                            />
+                          ) : (
+                            <ExpandTrigger
+                              class={`${mergedClsPrefix}-data-table-expand-trigger`}
+                              clsPrefix={mergedClsPrefix}
+                              expanded={expanded}
+                              onClick={() => {
+                                handleUpdateExpanded(rowKey)
+                              }}
+                            />
+                          )
+                        ]
                       : null}
                     {column.type === 'selection' ? (
                       !isSummary ? (
@@ -513,12 +533,12 @@ export default defineComponent({
                       !isSummary ? (
                         !column.expandable ||
                         column.expandable?.(rowData, rowIndex) ? (
-                            <ExpandTrigger
-                              clsPrefix={mergedClsPrefix}
-                              expanded={expanded}
-                              onClick={() => handleUpdateExpanded(rowKey)}
-                            />
-                          ) : null
+                          <ExpandTrigger
+                            clsPrefix={mergedClsPrefix}
+                            expanded={expanded}
+                            onClick={() => handleUpdateExpanded(rowKey)}
+                          />
+                            ) : null
                       ) : null
                     ) : (
                       <Cell
@@ -533,6 +553,10 @@ export default defineComponent({
                 )
               })
               const props = rowProps ? rowProps(rowData, rowIndex) : undefined
+              const mergedRowClassName =
+                typeof rowClassName === 'string'
+                  ? rowClassName
+                  : createRowClassName(rowData, rowIndex, rowClassName)
               const row = (
                 <tr
                   onMouseenter={() => {
@@ -541,7 +565,7 @@ export default defineComponent({
                   key={rowKey}
                   class={[
                     `${mergedClsPrefix}-data-table-tr`,
-                    createRowClassName(rowData, rowIndex, rowClassName)
+                    mergedRowClassName
                   ]}
                   {...props}
                 >
@@ -612,8 +636,7 @@ export default defineComponent({
                 onMouseleave={handleMouseleaveTable}
                 onMouseenter={handleMouseenterTable}
                 style={{
-                  tableLayout:
-                    this.showHeader && !hasEllipsis ? this.tableLayout : 'fixed'
+                  tableLayout: this.mergedTableLayout
                 }}
               >
                 <colgroup>

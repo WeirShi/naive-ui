@@ -7,6 +7,7 @@ import {
   CSSProperties
 } from 'vue'
 import { useCompitable } from 'vooks'
+import { pxfy } from 'seemly'
 import { NBaseLoading } from '../../_internal'
 import { useConfig, useTheme } from '../../_mixins'
 import type { ThemeProps } from '../../_mixins'
@@ -16,9 +17,9 @@ import type { SpinTheme } from '../styles'
 import style from './styles/index.cssr'
 
 const STROKE_WIDTH = {
-  small: 22,
-  medium: 20,
-  large: 18
+  small: 20,
+  medium: 18,
+  large: 16
 }
 
 const spinProps = {
@@ -28,7 +29,7 @@ const spinProps = {
     default: undefined
   },
   size: {
-    type: [String, Number] as PropType<'small' | 'medium' | 'large'>,
+    type: [String, Number] as PropType<'small' | 'medium' | 'large' | number>,
     default: 'medium'
   },
   show: {
@@ -46,6 +47,10 @@ const spinProps = {
       return true
     },
     default: undefined
+  },
+  rotate: {
+    type: Boolean,
+    default: true
   }
 }
 
@@ -71,14 +76,19 @@ export default defineComponent({
         const { strokeWidth } = props
         if (strokeWidth !== undefined) return strokeWidth
         const { size } = props
-        return STROKE_WIDTH[size]
+        return STROKE_WIDTH[typeof size === 'number' ? 'medium' : size]
       }),
       cssVars: computed(() => {
         const { size: spinSize } = props
         const {
           common: { cubicBezierEaseInOut },
-          self: { opacitySpinning, color, [createKey('size', spinSize)]: size }
+          self
         } = themeRef.value
+        const { opacitySpinning, color } = self
+        const size =
+          typeof spinSize === 'number'
+            ? pxfy(spinSize)
+            : self[createKey('size', spinSize)]
         return {
           '--bezier': cubicBezierEaseInOut,
           '--opacity-spinning': opacitySpinning,
@@ -90,6 +100,26 @@ export default defineComponent({
   },
   render () {
     const { $slots, mergedClsPrefix } = this
+    const rotate = $slots.icon && this.rotate
+    const icon = $slots.icon ? (
+      <div
+        class={[
+          `${mergedClsPrefix}-spin`,
+          rotate && `${mergedClsPrefix}-spin--rotate`
+        ]}
+        style={$slots.default ? '' : (this.cssVars as CSSProperties)}
+      >
+        {$slots.icon()}
+      </div>
+    ) : (
+      <NBaseLoading
+        clsPrefix={mergedClsPrefix}
+        style={$slots.default ? '' : (this.cssVars as CSSProperties)}
+        stroke={this.stroke}
+        stroke-width={this.mergedStrokeWidth}
+        class={`${mergedClsPrefix}-spin`}
+      />
+    )
     return $slots.default ? (
       <div
         class={`${mergedClsPrefix}-spin-container`}
@@ -105,26 +135,12 @@ export default defineComponent({
         </div>
         <Transition name="fade-in-transition">
           {{
-            default: () =>
-              this.compitableShow ? (
-                <NBaseLoading
-                  clsPrefix={mergedClsPrefix}
-                  stroke={this.stroke}
-                  strokeWidth={this.mergedStrokeWidth}
-                  class={`${mergedClsPrefix}-spin`}
-                />
-              ) : null
+            default: () => (this.compitableShow ? icon : null)
           }}
         </Transition>
       </div>
     ) : (
-      <NBaseLoading
-        clsPrefix={mergedClsPrefix}
-        style={this.cssVars as CSSProperties}
-        stroke={this.stroke}
-        stroke-width={this.mergedStrokeWidth}
-        class={`${mergedClsPrefix}-spin`}
-      />
+      icon
     )
   }
 })

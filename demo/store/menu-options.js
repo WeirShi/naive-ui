@@ -1,5 +1,21 @@
 // rubbish code here
 
+import { h } from 'vue'
+import { RouterLink } from 'vue-router'
+
+export const renderMenuLabel = (option) => {
+  if (!('path' in option) || option.label === '--Debug') {
+    return option.label
+  }
+  return h(
+    RouterLink,
+    {
+      to: option.path
+    },
+    { default: () => option.label }
+  )
+}
+
 const appendCounts = (item) => {
   if (!item.children) {
     item.count = 1
@@ -14,12 +30,6 @@ const appendCounts = (item) => {
     }
     return item
   }
-}
-
-const createDeprecatedDemos = (item, mode) => {
-  if (__DEV__ && mode === 'debug') {
-    return [item]
-  } else return []
 }
 
 const createDebugDemos = (item, mode) => {
@@ -120,6 +130,11 @@ export function createDocumentationMenuOptions ({ lang, theme, mode }) {
           path: '/customize-theme'
         },
         {
+          en: 'Internationalization',
+          zh: '国际化',
+          path: '/i18n'
+        },
+        {
           en: 'Create Themed Component',
           zh: '创建适配主题的组件',
           path: '/theme'
@@ -175,6 +190,12 @@ export function createComponentMenuOptions ({ lang, theme, mode }) {
           zh: '卡片',
           enSuffix: true,
           path: '/card'
+        },
+        {
+          en: 'Carousel',
+          zh: '轮播图',
+          enSuffix: true,
+          path: '/carousel'
         },
         {
           en: 'Collapse',
@@ -344,6 +365,12 @@ export function createComponentMenuOptions ({ lang, theme, mode }) {
           zh: '穿梭框',
           enSuffix: true,
           path: '/transfer'
+        },
+        {
+          en: 'Tree Select',
+          zh: '树型选择',
+          enSuffix: true,
+          path: '/tree-select'
         },
         {
           en: 'Upload',
@@ -665,18 +692,6 @@ export function createComponentMenuOptions ({ lang, theme, mode }) {
         }
       ]
     },
-    ...createDeprecatedDemos(
-      {
-        en: '--Deprecated',
-        children: [
-          {
-            en: 'Nimbus Service Layout',
-            path: '/nimbus-service-layout'
-          }
-        ]
-      },
-      mode
-    ),
     ...createDebugDemos(
       {
         en: '--Debug',

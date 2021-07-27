@@ -15,7 +15,6 @@
   :rules="rules"
   ref="formRef"
   label-placement="left"
-  label-align="right"
   :size="size"
   :label-width="160"
   :style="{
@@ -227,7 +226,13 @@ export default defineComponent({
           trigger: ['blur', 'change'],
           message: 'Please input timePickerValue'
         },
-        sliderValue: 0,
+        sliderValue: {
+          validator (rule, value) {
+            return value > 50
+          },
+          trigger: ['blur', 'change'],
+          message: 'sliderValue should be larger tha 50'
+        },
         transferValue: {
           type: 'array',
           required: true,

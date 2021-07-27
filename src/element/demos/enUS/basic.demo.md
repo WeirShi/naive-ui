@@ -1,6 +1,6 @@
 # Basic
 
-It is very useful to create themed component.
+You can use CSS variables from it. If you need to use those variables in JS, please see [useThemeVars](../docs/theme#use-theme-vars).
 
 ```html
 <n-space vertical>
@@ -22,15 +22,15 @@ It is very useful to create themed component.
 ```
 
 ```js
-import { ref } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { darkTheme } from 'naive-ui'
 
-export default {
+export default defineComponent({
   setup () {
     return {
       darkTheme,
       theme: ref(null)
     }
   }
-}
+})
 ```

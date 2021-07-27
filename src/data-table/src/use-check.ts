@@ -1,6 +1,11 @@
 import { computed, ComputedRef, ref } from 'vue'
 import { DataTableSetupProps } from './DataTable'
-import { RowKey, TableSelectionColumn, RowData, TmNode } from './interface'
+import {
+  RowKey,
+  TableSelectionColumn,
+  InternalRowData,
+  TmNode
+} from './interface'
 import { call } from '../../_utils'
 import { TreeMate } from 'treemate'
 
@@ -10,7 +15,7 @@ export function useCheck (
   data: {
     selectionColumnRef: ComputedRef<TableSelectionColumn | null>
     paginatedDataRef: ComputedRef<TmNode[]>
-    treeMateRef: ComputedRef<TreeMate<RowData>>
+    treeMateRef: ComputedRef<TreeMate<InternalRowData>>
   }
 ) {
   const { paginatedDataRef, treeMateRef, selectionColumnRef } = data
@@ -58,15 +63,19 @@ export function useCheck (
     )
   })
   const allRowsCheckedRef = computed(() => {
-    return (
-      countOfCurrentPageCheckedRowsRef.value === paginatedDataRef.value.length
-    )
+    const { length } = paginatedDataRef.value
+    return length !== 0 && countOfCurrentPageCheckedRowsRef.value === length
+  })
+  const headerCheckboxDisabledRef = computed(() => {
+    return paginatedDataRef.value.length === 0
   })
   function doUpdateCheckedRowKeys (keys: RowKey[]): void {
     const {
-      'onUpdate:checkedRowKeys': onUpdateCheckedRowKeys,
+      'onUpdate:checkedRowKeys': _onUpdateCheckedRowKeys,
+      onUpdateCheckedRowKeys,
       onCheckedRowKeysChange
     } = props
+    if (_onUpdateCheckedRowKeys) call(_onUpdateCheckedRowKeys, keys)
     if (onUpdateCheckedRowKeys) call(onUpdateCheckedRowKeys, keys)
     if (onCheckedRowKeysChange) call(onCheckedRowKeysChange, keys)
     uncontrolledCheckedRowKeysRef.value = keys
@@ -133,6 +142,7 @@ export function useCheck (
     mergedInderminateRowKeySetRef,
     someRowsCheckedRef,
     allRowsCheckedRef,
+    headerCheckboxDisabledRef,
     doUpdateCheckedRowKeys,
     doCheckAll,
     doUncheckAll,

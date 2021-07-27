@@ -64,6 +64,7 @@ export default cB('form-item', {
       "blank"
       "feedback";
     grid-template-rows: var(--label-height) 1fr;
+    grid-template-columns: minmax(0, 100%);
   `, [
     cM('no-label', `
       grid-template-areas:
@@ -73,7 +74,8 @@ export default cB('form-item', {
     `),
     cB('form-item-label', {
       display: 'flex',
-      alignItems: 'flex-end'
+      alignItems: 'flex-end',
+      justifyContent: 'var(--label-text-align)'
     })
   ]),
   cB('form-item-blank', `

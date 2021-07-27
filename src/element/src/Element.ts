@@ -1,14 +1,8 @@
-import { computed, h, defineComponent, PropType } from 'vue'
+import { computed, h, defineComponent } from 'vue'
 import { kebabCase } from 'lodash-es'
 import { useConfig, useTheme } from '../../_mixins'
 import type { ThemeProps } from '../../_mixins'
-import { warn } from '../../_utils'
 import type { ExtractPublicPropTypes } from '../../_utils'
-
-/**
- * @deprecated
- */
-import useLegacy from '../../config-consumer/src/use-legacy'
 import { elementLight } from '../styles'
 import type { ElementTheme } from '../styles'
 
@@ -17,23 +11,6 @@ const elementProps = {
   tag: {
     type: String,
     default: 'div'
-  },
-  // deprecated
-  onThemeChange: {
-    type: Function as PropType<(theme: string | undefined) => void>,
-    validator: () => {
-      warn('element', '`on-theme-change` is deprecated.')
-      return true
-    },
-    default: undefined
-  },
-  as: {
-    type: String,
-    validator: () => {
-      warn('element', '`as` is deprecated, please use `tag` instead.')
-      return true
-    },
-    default: undefined
   }
 } as const
 
@@ -44,9 +21,7 @@ export default defineComponent({
   alias: ['El'],
   props: elementProps,
   setup (props) {
-    const { NConfigProvider, namespaceRef, mergedClsPrefixRef } = useConfig(
-      props
-    )
+    const { mergedClsPrefixRef } = useConfig(props)
     const themeRef = useTheme(
       'Element',
       'Element',
@@ -56,14 +31,12 @@ export default defineComponent({
       mergedClsPrefixRef
     )
     return {
-      ...useLegacy(NConfigProvider),
       mergedClsPrefix: mergedClsPrefixRef,
-      namespace: namespaceRef,
       cssVars: computed(() => {
         const { common } = themeRef.value
-        return ((Object.keys(common) as unknown) as Array<
-        keyof typeof common
-        >).reduce<Record<string, string | number>>((prevValue, key) => {
+        return (
+          Object.keys(common) as unknown as Array<keyof typeof common>
+        ).reduce<Record<string, string | number>>((prevValue, key) => {
           prevValue[`--${kebabCase(key)}`] = common[key]
           return prevValue
         }, {})
@@ -71,33 +44,15 @@ export default defineComponent({
     }
   },
   render () {
-    const {
-      as,
-      tag,
-      mergedClsPrefix,
-      namespace,
-      $slots,
-      cssVars,
-      // deprecated
-      legacyTheme,
-      legacyThemeEnvironment,
-      legacyStyleScheme
-    } = this
+    const { tag, mergedClsPrefix, cssVars, $slots } = this
     return h(
-      as || tag,
+      tag,
       {
-        class: [
-          `${mergedClsPrefix}-element`,
-          legacyTheme && `${mergedClsPrefix}-${legacyTheme}-theme`
-        ],
+        role: 'none',
+        class: `${mergedClsPrefix}-element`,
         style: cssVars
       },
-      ($slots.default?.({
-        namespace: namespace,
-        theme: legacyTheme,
-        themeEnvironment: legacyThemeEnvironment,
-        styleScheme: legacyStyleScheme
-      }) || null) as any
+      $slots.default?.()
     )
   }
 })

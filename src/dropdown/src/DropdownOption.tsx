@@ -13,8 +13,7 @@ import {
 import { VBinder, VTarget, VFollower, FollowerPlacement } from 'vueuc'
 import { useMemo } from 'vooks'
 import { ChevronRightIcon } from '../../_internal/icons'
-import { useDeferredTrue } from '../../_utils/composable'
-import { render } from '../../_utils'
+import { render, useDeferredTrue } from '../../_utils'
 import { NIcon } from '../../icon'
 import NDropdownMenu, { dropdownMenuInjectionKey } from './DropdownMenu'
 import { dropdownInjectionKey } from './Dropdown'
@@ -30,9 +29,8 @@ interface NDropdownOptionInjection {
   enteringSubmenuRef: Ref<boolean>
 }
 
-const dropdownOptionInjectionKey: InjectionKey<NDropdownOptionInjection> = Symbol(
-  'dropdown-option'
-)
+const dropdownOptionInjectionKey: InjectionKey<NDropdownOptionInjection> =
+  Symbol('dropdown-option')
 
 export default defineComponent({
   name: 'DropdownOption',
@@ -66,7 +64,9 @@ export default defineComponent({
       pendingKeyPathRef,
       activeKeyPathRef,
       animatedRef,
-      mergedShowRef
+      mergedShowRef,
+      renderLabelRef,
+      renderIconRef
     } = NDropdown
     const NDropdownOption = inject(dropdownOptionInjectionKey, null)
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -75,13 +75,18 @@ export default defineComponent({
     const hasSubmenuRef = computed(() => {
       return isSubmenuNode(props.tmNode.rawNode)
     })
+    const mergedDisabledRef = computed(() => {
+      const { disabled } = props.tmNode
+      return disabled
+    })
     const showSubmenuRef = computed(() => {
       if (!hasSubmenuRef.value) return false
+      const { key, disabled } = props.tmNode
+      if (disabled) return false
       const { value: hoverKey } = hoverKeyRef
       const { value: keyboardKey } = keyboardKeyRef
       const { value: lastToggledSubmenuKey } = lastToggledSubmenuKeyRef
       const { value: pendingKeyPath } = pendingKeyPathRef
-      const { key } = props.tmNode
       if (hoverKey !== null) return pendingKeyPath.includes(key)
       if (keyboardKey !== null) {
         return (
@@ -144,12 +149,14 @@ export default defineComponent({
       if (!hasSubmenu && !tmNode.disabled) {
         NDropdown.doSelect(
           tmNode.key,
-          ((tmNode as unknown) as TreeNode<DropdownOption>).rawNode
+          (tmNode as unknown as TreeNode<DropdownOption>).rawNode
         )
         NDropdown.doUpdateShow(false)
       }
     }
     return {
+      renderLabel: renderLabelRef,
+      renderIcon: renderIconRef,
       siblingHasIcon: NDropdownMenu.showIconRef,
       siblingHasSubmenu: NDropdownMenu.hasSubmenuRef,
       animated: animatedRef,
@@ -177,6 +184,7 @@ export default defineComponent({
         if (index === -1) return false
         return index === activeKeyPath.length - 1
       }),
+      mergedDisabled: mergedDisabledRef,
       handleClick,
       handleMouseMove,
       handleMouseEnter,
@@ -192,7 +200,9 @@ export default defineComponent({
       mergedShowSubmenu,
       clsPrefix,
       siblingHasIcon,
-      siblingHasSubmenu
+      siblingHasSubmenu,
+      renderLabel,
+      renderIcon
     } = this
     const submenuVNode = mergedShowSubmenu ? (
       <NDropdownMenu
@@ -209,8 +219,10 @@ export default defineComponent({
             {
               [`${clsPrefix}-dropdown-option-body--pending`]: this.pending,
               [`${clsPrefix}-dropdown-option-body--active`]: this.active,
-              [`${clsPrefix}-dropdown-option-body--child-active`]: this
-                .childActive
+              [`${clsPrefix}-dropdown-option-body--child-active`]:
+                this.childActive,
+              [`${clsPrefix}-dropdown-option-body--disabled`]:
+                this.mergedDisabled
             }
           ]}
           onMousemove={this.handleMouseMove}
@@ -226,14 +238,16 @@ export default defineComponent({
                 `${clsPrefix}-dropdown-option-body__prefix--show-icon`
             ]}
           >
-            {h(render, { render: rawNode.icon })}
+            {renderIcon ? renderIcon(rawNode) : render(rawNode.icon)}
           </div>
           <div
             __dropdown-option
             class={`${clsPrefix}-dropdown-option-body__label`}
           >
             {/* TODO: Workaround, menu campatible */}
-            {h(render, { render: rawNode.label ?? rawNode.title })}
+            {renderLabel
+              ? renderLabel(rawNode)
+              : render(rawNode.label ?? rawNode.title)}
           </div>
           <div
             __dropdown-option

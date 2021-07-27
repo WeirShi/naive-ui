@@ -1,4 +1,4 @@
-import { InjectionKey, Ref } from 'vue'
+import { InjectionKey, Ref, Slots } from 'vue'
 import { NLocale, NDateLocale } from '../../locales'
 import {
   IsHourDisabled,
@@ -33,6 +33,8 @@ export type OnPanelUpdateValueImpl = (
   doUpdate: boolean
 ) => void
 
+export type OnClose = (disableUpdateOnClose: boolean) => void
+
 export interface PanelRef {
   $el: HTMLElement
 }
@@ -45,6 +47,9 @@ export type DatePickerInjection = {
   dateLocaleRef: Ref<NDateLocale>
   isDateDisabledRef: Ref<IsDateDisabled | undefined>
   rangesRef: Ref<Record<string, [number, number]> | undefined>
+  closeOnSelectRef: Ref<boolean>
+  updateValueOnCloseRef: Ref<boolean>
+  datePickerSlots: Slots
 } & ReturnType<typeof uniCalendarValidation> &
 ReturnType<typeof dualCalendarValidation>
 

@@ -2,6 +2,7 @@ import { h, inject, defineComponent } from 'vue'
 import { useMemo } from 'vooks'
 import { NCheckbox } from '../../checkbox'
 import { transferInjectionKey } from './interface'
+import { getTitleAttribute } from '../../_utils'
 
 export default defineComponent({
   name: 'NTransferListItem',
@@ -39,15 +40,15 @@ export default defineComponent({
       : useMemo(() => tgtCheckedValuesRef.value.includes(props.value))
     const handleClick = source
       ? () => {
-        if (!props.disabled) {
-          handleSrcCheckboxClick(!checkedRef.value, props.value)
+          if (!props.disabled) {
+            handleSrcCheckboxClick(!checkedRef.value, props.value)
+          }
         }
-      }
       : () => {
-        if (!props.disabled) {
-          handleTgtCheckboxClick(!checkedRef.value, props.value)
+          if (!props.disabled) {
+            handleTgtCheckboxClick(!checkedRef.value, props.value)
+          }
         }
-      }
     return {
       mergedClsPrefix: mergedClsPrefixRef,
       mergedTheme: mergedThemeRef,
@@ -56,14 +57,8 @@ export default defineComponent({
     }
   },
   render () {
-    const {
-      disabled,
-      mergedTheme,
-      mergedClsPrefix,
-      label,
-      checked,
-      source
-    } = this
+    const { disabled, mergedTheme, mergedClsPrefix, label, checked, source } =
+      this
     return (
       <div
         class={[
@@ -83,7 +78,10 @@ export default defineComponent({
             checked={checked}
           />
         </div>
-        <div class={`${mergedClsPrefix}-transfer-list-item__label`}>
+        <div
+          class={`${mergedClsPrefix}-transfer-list-item__label`}
+          title={getTitleAttribute(label)}
+        >
           {label}
         </div>
       </div>

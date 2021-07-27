@@ -116,8 +116,9 @@ export default defineComponent({
     const barElRef = ref<HTMLElement | null>(null)
     const scrollWrapperElRef = ref<HTMLElement | null>(null)
     const addTabInstRef = ref<ComponentPublicInstance | null>(null)
-    const xScrollInstRef =
-      ref<(VXScrollInst & ComponentPublicInstance) | null>(null)
+    const xScrollInstRef = ref<(VXScrollInst & ComponentPublicInstance) | null>(
+      null
+    )
 
     const leftReachedRef = ref(true)
     const rightReachedRef = ref(true)
@@ -377,7 +378,11 @@ export default defineComponent({
       mergedSize,
       $slots: { default: defaultSlot, prefix: prefixSlot, suffix: suffixSlot }
     } = this
-    const children = defaultSlot ? flatten(defaultSlot()) : []
+    const children = defaultSlot
+      ? flatten(defaultSlot()).filter((v) => {
+        return (v.type as any).__TAB_PANE__ === true
+      })
+      : []
     const prefix = prefixSlot ? prefixSlot() : null
     const suffix = suffixSlot ? suffixSlot() : null
     const isCard = type === 'card'
@@ -426,9 +431,11 @@ export default defineComponent({
                                       index !== 0 && !mergedJustifyContent
                                     }
                                   >
-                                    {{
-                                      default: tabPaneVNode.children.tab
-                                    }}
+                                    {tabPaneVNode.children
+                                      ? {
+                                          default: tabPaneVNode.children.tab
+                                        }
+                                      : undefined}
                                   </Tab>
                                 )
                               }
@@ -511,7 +518,6 @@ function filterMapTabPanes (
     if (vNode.key !== undefined) {
       vNode.key = name
     }
-    console.log(vNode.props)
     if (useVShow) {
       children.push(withDirectives(vNode, [[vShow, show]]))
     } else if (show) {

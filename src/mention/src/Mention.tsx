@@ -13,6 +13,7 @@ import {
 import { createTreeMate } from 'treemate'
 import { VBinder, VFollower, VTarget, FollowerInst } from 'vueuc'
 import { useIsMounted, useMergedState } from 'vooks'
+import { RenderLabel } from '../../_internal/select-menu/src/interface'
 import type { Size as InputSize } from '../../input/src/interface'
 import { NInput } from '../../input'
 import type { InputInst } from '../../input'
@@ -30,9 +31,8 @@ import type { ThemeProps } from '../../_mixins'
 import { mentionLight } from '../styles'
 import type { MentionTheme } from '../styles'
 import { getRelativePosition } from './utils'
-
-import style from './styles/index.cssr'
 import type { MentionOption } from './interface'
+import style from './styles/index.cssr'
 
 const mentionProps = {
   ...(useTheme.props as ThemeProps<MentionTheme>),
@@ -82,6 +82,7 @@ const mentionProps = {
   'onUpdate:value': [Array, Function] as PropType<
   MaybeArray<(value: string) => void>
   >,
+  renderLabel: Function as PropType<RenderLabel>,
   onUpdateValue: [Array, Function] as PropType<
   MaybeArray<(value: string) => void>
   >,
@@ -126,7 +127,10 @@ export default defineComponent({
       const { value: pattern } = partialPatternRef
       return props.options.filter((option) => {
         if (!pattern) return true
-        return option.label.startsWith(pattern)
+        if (typeof option.label === 'string') {
+          return option.label.startsWith(pattern)
+        }
+        return option.value.startsWith(pattern)
       })
     })
     const treeMateRef = computed(() => {
@@ -134,7 +138,13 @@ export default defineComponent({
       SelectBaseOption,
       SelectGroupOption,
       SelectIgnoredOption
-      >(filteredOptionsRef.value, {
+      // We need to cast filteredOptionsRef's type since the render function
+      // is not compitable
+      // MentionOption { value: string, render?: (value: string) => VNodeChild }
+      // SelectOption { value: string | number, render?: (value: string | number) => VNodeChild }
+      // The 2 types are not compatible since `render`s are not compatible
+      // However we know it works...
+      >(filteredOptionsRef.value as any, {
         getKey: (v) => {
           return (v as any).value
         }
@@ -249,7 +259,8 @@ export default defineComponent({
       } else if (
         e.code === 'ArrowUp' ||
         e.code === 'ArrowDown' ||
-        e.code === 'Enter'
+        e.code === 'Enter' ||
+        e.code === 'NumpadEnter'
       ) {
         if (inputInstRef.value?.isCompositing) return
         const { value: selectMenuInst } = selectMenuInstRef
@@ -364,7 +375,7 @@ export default defineComponent({
     }
   },
   render () {
-    const { mergedTheme, mergedClsPrefix } = this
+    const { mergedTheme, mergedClsPrefix, $slots } = this
     return (
       <div class={`${mergedClsPrefix}-mention`}>
         <NInput
@@ -436,7 +447,10 @@ export default defineComponent({
                               virtualScroll={false}
                               style={this.cssVars as CSSProperties}
                               onMenuToggleOption={this.handleSelect}
-                            />
+                              renderLabel={this.renderLabel}
+                            >
+                              {$slots}
+                            </NInternalSelectMenu>
                           ) : null
                         }
                       }}

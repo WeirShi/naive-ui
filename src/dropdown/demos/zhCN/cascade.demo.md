@@ -9,7 +9,7 @@
   trigger="click"
   @select="handleSelect"
 >
-  <n-button :keyboard="false">人物和食物</n-button>
+  <n-button>人物和食物</n-button>
 </n-dropdown>
 ```
 
@@ -55,6 +55,7 @@ const options = [
       {
         label: '其他',
         key: 'others2',
+        disabled: true,
         children: [
           {
             label: '鸡肉',

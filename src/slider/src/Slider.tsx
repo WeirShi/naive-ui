@@ -27,6 +27,7 @@ import type { MaybeArray, ExtractPublicPropTypes } from '../../_utils'
 import { sliderLight, SliderTheme } from '../styles'
 import style from './styles/index.cssr'
 import { OnUpdateValueImpl } from './interface'
+import { isTouchEvent } from './utils'
 
 const sliderProps = {
   ...(useTheme.props as ThemeProps<SliderTheme>),
@@ -36,10 +37,8 @@ const sliderProps = {
     default: 0
   },
   marks: Object as PropType<Record<string, string>>,
-  disabled: {
-    type: Boolean,
-    default: false
-  },
+  disabled: Boolean,
+  formatTooltip: Function as PropType<(value: number) => string | number>,
   min: {
     type: Number,
     default: 0
@@ -52,10 +51,7 @@ const sliderProps = {
     type: Number,
     default: 1
   },
-  range: {
-    type: Boolean,
-    default: false
-  },
+  range: Boolean,
   value: [Number, Array] as PropType<number | [number, number]>,
   placement: {
     type: String as PropType<FollowerPlacement>,
@@ -65,7 +61,10 @@ const sliderProps = {
     type: Boolean as PropType<boolean | undefined>,
     default: undefined
   },
-  // eslint-disable-next-line vue/prop-name-casing
+  tooltip: {
+    type: Boolean,
+    default: true
+  },
   'onUpdate:value': [Function, Array] as PropType<
   MaybeArray<<T extends number & [number, number]>(value: T) => void>
   >,
@@ -265,6 +264,7 @@ export default defineComponent({
       doUpdateShow(false, false)
     }
     function handleRailClick (e: MouseEvent): void {
+      if (props.disabled) return
       const { value: railEl } = railRef
       if (!railEl) return
       const railRect = railEl.getBoundingClientRect()
@@ -295,14 +295,18 @@ export default defineComponent({
         }
       }
     }
-    function handleHandleMouseMove (e: MouseEvent, handleIndex: 0 | 1): void {
+    function handleHandleMouseMove (
+      e: MouseEvent | TouchEvent,
+      handleIndex: 0 | 1
+    ): void {
       if (!handleRef1.value || !railRef.value) return
+      const x = 'touches' in e ? e.touches[0].clientX : e.clientX
       const { width: handleWidth } = handleRef1.value.getBoundingClientRect()
       const { width: railWidth, left: railLeft } =
         railRef.value.getBoundingClientRect()
       const { min, max, range } = props
       const offsetRatio =
-        (e.clientX - railLeft - handleWidth / 2) / (railWidth - handleWidth)
+        (x - railLeft - handleWidth / 2) / (railWidth - handleWidth)
       const newValue = min + (max - min) * offsetRatio
       if (range) {
         if (handleIndex === 0) {
@@ -315,6 +319,7 @@ export default defineComponent({
       }
     }
     function handleKeyDown (e: KeyboardEvent): void {
+      if (props.disabled) return
       switch (e.code) {
         case 'ArrowRight':
           handleKeyDownRight()
@@ -462,34 +467,46 @@ export default defineComponent({
       }
       return justifiedValue
     }
-    function handleFirstHandleMouseDown (): void {
+    function handleFirstHandleMouseDown (e: MouseEvent | TouchEvent): void {
+      if (props.disabled) return
+      if (isTouchEvent(e)) e.preventDefault()
       if (props.range) {
         memoziedOtherValueRef.value = handleValue2Ref.value
       }
       doUpdateShow(true, false)
       handleClicked1Ref.value = true
+      on('touchend', document, handleHandleMouseUp)
       on('mouseup', document, handleHandleMouseUp)
+      on('touchmove', document, handleFirstHandleMouseMove)
       on('mousemove', document, handleFirstHandleMouseMove)
     }
-    function handleSecondHandleMouseDown (): void {
+    function handleSecondHandleMouseDown (e: MouseEvent | TouchEvent): void {
+      if (props.disabled) return
+      if (isTouchEvent(e)) e.preventDefault()
       if (props.range) {
         memoziedOtherValueRef.value = handleValue1Ref.value
       }
       doUpdateShow(false, true)
       handleClicked2Ref.value = true
+      on('touchend', document, handleHandleMouseUp)
       on('mouseup', document, handleHandleMouseUp)
+      on('touchmove', document, handleSecondHandleMouseMove)
       on('mousemove', document, handleSecondHandleMouseMove)
     }
-    function handleHandleMouseUp (e: MouseEvent): void {
+    function handleHandleMouseUp (e: MouseEvent | TouchEvent): void {
       if (
-        !handleRef1.value?.contains(e.target as Node) &&
-        (props.range ? !handleRef2.value?.contains(e.target as Node) : true)
+        isTouchEvent(e) ||
+        (!handleRef1.value?.contains(e.target as Node) &&
+          (props.range ? !handleRef2.value?.contains(e.target as Node) : true))
       ) {
         doUpdateShow(false, false)
       }
       handleClicked2Ref.value = false
       handleClicked1Ref.value = false
+      off('touchend', document, handleHandleMouseUp)
       off('mouseup', document, handleHandleMouseUp)
+      off('touchmove', document, handleFirstHandleMouseMove)
+      off('touchmove', document, handleSecondHandleMouseMove)
       off('mousemove', document, handleFirstHandleMouseMove)
       off('mousemove', document, handleSecondHandleMouseMove)
     }
@@ -540,10 +557,10 @@ export default defineComponent({
         }
       }
     }
-    function handleFirstHandleMouseMove (e: MouseEvent): void {
+    function handleFirstHandleMouseMove (e: MouseEvent | TouchEvent): void {
       handleHandleMouseMove(e, 0)
     }
-    function handleSecondHandleMouseMove (e: MouseEvent): void {
+    function handleSecondHandleMouseMove (e: MouseEvent | TouchEvent): void {
       handleHandleMouseMove(e, 1)
     }
     function handleFirstHandleMouseEnter (): void {
@@ -652,8 +669,11 @@ export default defineComponent({
       })
     })
     onBeforeUnmount(() => {
+      off('touchmove', document, handleFirstHandleMouseMove)
+      off('touchmove', document, handleSecondHandleMouseMove)
       off('mousemove', document, handleFirstHandleMouseMove)
       off('mousemove', document, handleSecondHandleMouseMove)
+      off('touchend', document, handleHandleMouseUp)
       off('mouseup', document, handleHandleMouseUp)
     })
     return {
@@ -724,6 +744,7 @@ export default defineComponent({
             fillColor,
             fillColorHover,
             handleColor,
+            opacityDisabled,
             dotColor,
             dotColorModal,
             handleBoxShadow,
@@ -763,6 +784,7 @@ export default defineComponent({
           '--handle-box-shadow-hover': handleBoxShadowHover,
           '--handle-color': handleColor,
           '--handle-size': handleSize,
+          '--opacity-disabled': opacityDisabled,
           '--rail-color': railColor,
           '--rail-color-hover': railColorHover,
           '--rail-height': railHeight
@@ -771,7 +793,7 @@ export default defineComponent({
     }
   },
   render () {
-    const { mergedClsPrefix } = this
+    const { mergedClsPrefix, formatTooltip } = this
     return (
       <div
         class={[
@@ -825,10 +847,11 @@ export default defineComponent({
                     <div
                       ref="handleRef1"
                       class={`${mergedClsPrefix}-slider-handle`}
-                      tabindex={0}
+                      tabindex={this.disabled ? -1 : 0}
                       style={this.firstHandleStyle}
                       onFocus={this.handleHandleFocus1}
                       onBlur={this.handleHandleBlur1}
+                      onTouchstart={this.handleFirstHandleMouseDown}
                       onMousedown={this.handleFirstHandleMouseDown}
                       onMouseenter={this.handleFirstHandleMouseEnter}
                       onMouseleave={this.handleFirstHandleMouseLeave}
@@ -836,40 +859,44 @@ export default defineComponent({
                   )
                 }}
               </VTarget>,
-              <VFollower
-                ref="followerRef1"
-                show={this.mergedShowTooltip1}
-                to={this.adjustedTo}
-                teleportDisabled={this.adjustedTo === useAdjustedTo.tdkey}
-                placement={this.placement}
-                containerClass={this.namespace}
-              >
-                {{
-                  default: () => (
-                    <Transition
-                      name="fade-in-scale-up-transition"
-                      appear={this.isMounted}
-                      css={!(this.active && this.prevActive)}
-                    >
-                      {{
-                        default: () =>
-                          this.mergedShowTooltip1 ? (
-                            <div
-                              class={`${mergedClsPrefix}-slider-handle-indicator`}
-                              style={this.indicatorCssVars as CSSProperties}
-                            >
-                              {this.handleValue1}
-                            </div>
-                          ) : null
-                      }}
-                    </Transition>
-                  )
-                }}
-              </VFollower>
+              this.tooltip && (
+                <VFollower
+                  ref="followerRef1"
+                  show={this.mergedShowTooltip1}
+                  to={this.adjustedTo}
+                  teleportDisabled={this.adjustedTo === useAdjustedTo.tdkey}
+                  placement={this.placement}
+                  containerClass={this.namespace}
+                >
+                  {{
+                    default: () => (
+                      <Transition
+                        name="fade-in-scale-up-transition"
+                        appear={this.isMounted}
+                        css={!(this.active && this.prevActive)}
+                      >
+                        {{
+                          default: () =>
+                            this.mergedShowTooltip1 ? (
+                              <div
+                                class={`${mergedClsPrefix}-slider-handle-indicator`}
+                                style={this.indicatorCssVars as CSSProperties}
+                              >
+                                {typeof formatTooltip === 'function'
+                                  ? formatTooltip(this.handleValue1)
+                                  : this.handleValue1}
+                              </div>
+                            ) : null
+                        }}
+                      </Transition>
+                    )
+                  }}
+                </VFollower>
+              )
             ]
           }}
         </VBinder>
-        {this.range ? (
+        {this.tooltip && this.range ? (
           <VBinder>
             {{
               default: () => [
@@ -879,10 +906,11 @@ export default defineComponent({
                       <div
                         ref="handleRef2"
                         class={`${mergedClsPrefix}-slider-handle`}
-                        tabindex={0}
+                        tabindex={this.disabled ? -1 : 0}
                         style={this.secondHandleStyle}
                         onFocus={this.handleHandleFocus2}
                         onBlur={this.handleHandleBlur2}
+                        onTouchstart={this.handleSecondHandleMouseDown}
                         onMousedown={this.handleSecondHandleMouseDown}
                         onMouseenter={this.handleSecondHandleMouseEnter}
                         onMouseleave={this.handleSecondHandleMouseLeave}
@@ -912,7 +940,9 @@ export default defineComponent({
                                 class={`${mergedClsPrefix}-slider-handle-indicator`}
                                 style={this.indicatorCssVars as CSSProperties}
                               >
-                                {this.handleValue2}
+                                {typeof formatTooltip === 'function'
+                                  ? formatTooltip(this.handleValue2)
+                                  : this.handleValue2}
                               </div>
                             ) : null
                         }}

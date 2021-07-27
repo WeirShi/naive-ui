@@ -9,7 +9,8 @@ import {
   ExtractPropTypes,
   InjectionKey,
   CSSProperties,
-  inject
+  inject,
+  VNodeChild
 } from 'vue'
 import { createTreeMate, Key } from 'treemate'
 import { useCompitable, useMergedState } from 'vooks'
@@ -30,6 +31,7 @@ import {
   OnUpdateKeysImpl
 } from './interface'
 import { layoutSiderInjectionKey } from '../../layout/src/interface'
+import { FollowerPlacement } from 'vueuc'
 
 const menuProps = {
   ...(useTheme.props as ThemeProps<MenuTheme>),
@@ -69,10 +71,7 @@ const menuProps = {
     default: 32
   },
   defaultExpandAll: Boolean,
-  defaultExpandedKeys: {
-    type: Array as PropType<Key[]>,
-    default: () => []
-  },
+  defaultExpandedKeys: Array as PropType<Key[]>,
   expandedKeys: {
     type: Array as PropType<Key[]>,
     default: undefined
@@ -88,11 +87,11 @@ const menuProps = {
   },
   disabled: Boolean,
   inverted: Boolean,
-  // eslint-disable-next-line vue/prop-name-casing
   'onUpdate:expandedKeys': [Function, Array] as PropType<
   MaybeArray<OnUpdateKeys>
   >,
-  // eslint-disable-next-line vue/prop-name-casing
+  onUpdateExpandedKeys: [Function, Array] as PropType<MaybeArray<OnUpdateKeys>>,
+  onUpdateValue: [Function, Array] as PropType<MaybeArray<OnUpdateValue>>,
   'onUpdate:value': [Function, Array] as PropType<MaybeArray<OnUpdateValue>>,
   // deprecated
   onOpenNamesChange: {
@@ -128,6 +127,7 @@ const menuProps = {
     },
     default: undefined
   },
+  expandIcon: Function as PropType<(option: MenuOption) => VNodeChild>,
   expandedNames: {
     type: Array as PropType<Key[]>,
     validator: () => {
@@ -149,6 +149,14 @@ const menuProps = {
       return true
     },
     default: undefined
+  },
+  renderIcon: Function as PropType<(option: MenuOption) => VNodeChild>,
+  renderLabel: Function as PropType<
+  (option: MenuOption | MenuGroupOption) => VNodeChild
+  >,
+  dropdownPlacement: {
+    type: String as PropType<FollowerPlacement>,
+    default: 'bottom'
   }
 } as const
 
@@ -196,10 +204,22 @@ export default defineComponent({
         }
       )
     )
+
+    const uncontrolledValueRef = ref(props.defaultValue)
+    const controlledValueRef = toRef(props, 'value')
+    const mergedValueRef = useMergedState(
+      controlledValueRef,
+      uncontrolledValueRef
+    )
+
     const uncontrolledExpandedKeysRef = ref(
       props.defaultExpandAll
         ? treeMateRef.value.getNonLeafKeys()
-        : props.defaultExpandedNames || props.defaultExpandedKeys
+        : props.defaultExpandedNames ||
+            props.defaultExpandedKeys ||
+            treeMateRef.value.getPath(mergedValueRef.value, {
+              includeSelf: false
+            }).keyPath
     )
     const controlledExpandedKeysRef = useCompitable(props, [
       'expandedNames',
@@ -208,12 +228,6 @@ export default defineComponent({
     const mergedExpandedKeysRef = useMergedState(
       controlledExpandedKeysRef,
       uncontrolledExpandedKeysRef
-    )
-    const uncontrolledValueRef = ref(props.defaultValue)
-    const controlledValueRef = toRef(props, 'value')
-    const mergedValueRef = useMergedState(
-      controlledValueRef,
-      uncontrolledValueRef
     )
     const tmNodesRef = computed(() => treeMateRef.value.treeNodes)
     const activePathRef = computed(() => {
@@ -233,9 +247,16 @@ export default defineComponent({
       toggleExpand
     })
     function doSelect (value: Key, item: MenuOption): void {
-      const { 'onUpdate:value': onUpdateValue, onSelect } = props
+      const {
+        'onUpdate:value': _onUpdateValue,
+        onUpdateValue,
+        onSelect
+      } = props
       if (onUpdateValue) {
         call(onUpdateValue as OnUpdateValueImpl, value, item)
+      }
+      if (_onUpdateValue) {
+        call(_onUpdateValue as OnUpdateValueImpl, value, item)
       }
       if (onSelect) {
         call(onSelect as OnUpdateValueImpl, value, item)
@@ -244,10 +265,14 @@ export default defineComponent({
     }
     function doUpdateExpandedKeys (value: Key[]): void {
       const {
-        'onUpdate:expandedKeys': onUpdateExpandedKeys,
+        'onUpdate:expandedKeys': _onUpdateExpandedKeys,
+        onUpdateExpandedKeys,
         onExpandedNamesChange,
         onOpenNamesChange
       } = props
+      if (_onUpdateExpandedKeys) {
+        call(_onUpdateExpandedKeys as OnUpdateKeysImpl, value)
+      }
       if (onUpdateExpandedKeys) {
         call(onUpdateExpandedKeys as OnUpdateKeysImpl, value)
       }

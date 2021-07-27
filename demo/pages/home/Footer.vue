@@ -9,7 +9,14 @@
     <div class="footer-links">
       <div class="footer-links-col">
         <n-text depth="1" class="col-header">{{ t('resources') }}</n-text>
-        <n-button disabled text>{{ t('designResources') }}</n-button>
+        <n-button
+          text
+          tag="a"
+          href="https://naive-ui.oss-accelerate.aliyuncs.com/NaiveUI-Design-Library%28Square-Corner%29.sketch"
+          download
+        >
+          {{ t('designResources') }}
+        </n-button>
         <n-button text tag="a" target="_blank" href="https://www.xicons.org">{{
           t('icons')
         }}</n-button>
@@ -26,7 +33,7 @@
           text
           tag="a"
           target="_blank"
-          href="https://github.com/TuSimple/naive-ui/issues/new/choose"
+          href="https://naive-ui.github.io/issue-helper/"
         >
           {{ t('reportBug') }}
         </n-button>

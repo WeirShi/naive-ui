@@ -9,7 +9,7 @@ Dropdown can be cascade.
   trigger="click"
   @select="handleSelect"
 >
-  <n-button :keyboard="false">People and Some Food to Eat</n-button>
+  <n-button>People and Some Food to Eat</n-button>
 </n-dropdown>
 ```
 
@@ -55,6 +55,7 @@ const options = [
       {
         label: 'Others',
         key: 'others2',
+        disabled: true,
         children: [
           {
             label: 'Chicken',

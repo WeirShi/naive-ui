@@ -11,7 +11,7 @@ import {
   SortState,
   TableBaseColumn,
   TableSelectionColumn,
-  RowData,
+  InternalRowData,
   TmNode,
   TableExpandColumn,
   RowKey
@@ -46,7 +46,7 @@ export function useTableData (
 
   const treeMateRef = computed(() => {
     const { childrenKey } = props
-    return createTreeMate<RowData>(props.data, {
+    return createTreeMate<InternalRowData>(props.data, {
       getKey: props.rowKey,
       getChildren: (rowData) => rowData[childrenKey] as any,
       getDisabled: (rowData) => {
@@ -141,11 +141,9 @@ export function useTableData (
           column.sortOrder === false)
     )
     // if multiple column is controlled sortable, then we need to find a column with active sortOrder
-    const columnToSort:
-    | TableBaseColumn
-    | undefined = (columnsWithControlledSortOrder as TableBaseColumn[]).filter(
-      (col: TableBaseColumn) => col.sortOrder !== false
-    )[0]
+    const columnToSort: TableBaseColumn | undefined = (
+      columnsWithControlledSortOrder as TableBaseColumn[]
+    ).filter((col: TableBaseColumn) => col.sortOrder !== false)[0]
     if (columnToSort) {
       return {
         columnKey: columnToSort.key,
@@ -187,7 +185,7 @@ export function useTableData (
     const mergedFilterState = mergedFilterStateRef.value
     const { columns } = props
     function createDefaultFilter (columnKey: ColumnKey): Filter {
-      return (filterOptionValue: FilterOptionValue, row: RowData) =>
+      return (filterOptionValue: FilterOptionValue, row: InternalRowData) =>
         !!~String(row[columnKey]).indexOf(String(filterOptionValue))
     }
     const {
@@ -262,19 +260,19 @@ export function useTableData (
       const order = activeSorter.order
       const sorter =
         activeSorter.sorter === undefined || activeSorter.sorter === 'default'
-          ? (row1: RowData, row2: RowData) => {
-            const value1 = row1[columnKey]
-            const value2 = row2[columnKey]
-            if (typeof value1 === 'number' && typeof value2 === 'number') {
-              return value1 - value2
-            } else if (
-              typeof value1 === 'string' &&
+          ? (row1: InternalRowData, row2: InternalRowData) => {
+              const value1 = row1[columnKey]
+              const value2 = row2[columnKey]
+              if (typeof value1 === 'number' && typeof value2 === 'number') {
+                return value1 - value2
+              } else if (
+                typeof value1 === 'string' &&
                 typeof value2 === 'string'
-            ) {
-              return value1.localeCompare(value2)
+              ) {
+                return value1.localeCompare(value2)
+              }
+              return 0
             }
-            return 0
-          }
           : activeSorter.sorter
       return filteredData.sort(
         (tmNode1, tmNode2) =>
@@ -292,26 +290,29 @@ export function useTableData (
     return sortedDataRef.value.slice(startIndex, startIndex + pageSize)
   })
 
-  const rawPaginatedDataRef = computed<RowData[]>(() => {
+  const rawPaginatedDataRef = computed<InternalRowData[]>(() => {
     return paginatedDataRef.value.map((tmNode) => tmNode.rawNode)
   })
 
   function mergedOnUpdatePage (page: number): void {
     const { pagination } = props
     if (pagination) {
-      const { onChange, 'onUpdate:page': onUpdatePage } = pagination
+      const {
+        onChange,
+        'onUpdate:page': _onUpdatePage,
+        onUpdatePage
+      } = pagination
       if (onChange) call(onChange, page)
       if (onUpdatePage) call(onUpdatePage, page)
+      if (_onUpdatePage) call(_onUpdatePage, page)
       doUpdatePage(page)
     }
   }
   function mergedOnUpdatePageSize (pageSize: number): void {
     const { pagination } = props
     if (pagination) {
-      const {
-        onPageSizeChange,
-        'onUpdate:pageSize': onUpdatePageSize
-      } = pagination
+      const { onPageSizeChange, 'onUpdate:pageSize': onUpdatePageSize } =
+        pagination
       if (onPageSizeChange) call(onPageSizeChange, pageSize)
       if (onUpdatePageSize) call(onUpdatePageSize, pageSize)
       doUpdatePageSize(pageSize)
@@ -348,7 +349,12 @@ export function useTableData (
     uncontrolledPageSizeRef.value = pageSize
   }
   function doUpdateSorter (sortState: SortState | null): void {
-    const { 'onUpdate:sorter': onUpdateSorter, onSorterChange } = props
+    const {
+      'onUpdate:sorter': _onUpdateSorter,
+      onUpdateSorter,
+      onSorterChange
+    } = props
+    if (_onUpdateSorter) call(_onUpdateSorter, sortState)
     if (onUpdateSorter) call(onUpdateSorter, sortState)
     if (onSorterChange) call(onSorterChange, sortState)
     uncontrolledSortStateRef.value = sortState
@@ -357,8 +363,13 @@ export function useTableData (
     filters: FilterState,
     sourceColumn?: TableBaseColumn
   ): void {
-    const { 'onUpdate:filters': onUpdateFilters, onFiltersChange } = props
+    const {
+      onUpdateFilters,
+      'onUpdate:filters': _onUpdateFilters,
+      onFiltersChange
+    } = props
     if (onUpdateFilters) call(onUpdateFilters, filters, sourceColumn)
+    if (_onUpdateFilters) call(_onUpdateFilters, filters, sourceColumn)
     if (onFiltersChange) call(onFiltersChange, filters, sourceColumn)
     uncontrolledFilterStateRef.value = filters
   }

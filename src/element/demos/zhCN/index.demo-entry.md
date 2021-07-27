@@ -1,12 +1,11 @@
 # 元素 Element
 
-Element 上面有很多 Naive UI 提供的 CSS 变量。
+Element 上面有很多 Naive UI 提供的主题变量。
 
 ## 演示
 
 ```demo
 basic
-color-debug
 ```
 
 ## Props
@@ -17,6 +16,6 @@ color-debug
 
 ## Slots
 
-| 名称    | 参数 | 说明 |
-| ------- | ---- | ---- |
-| default | `()` |      |
+| 名称    | 参数 | 说明     |
+| ------- | ---- | -------- |
+| default | `()` | 元素内容 |

@@ -9,15 +9,7 @@ import {
   toRef,
   renderSlot
 } from 'vue'
-import {
-  getDate,
-  format,
-  getYear,
-  addMonths,
-  startOfDay,
-  startOfMonth,
-  getMonth
-} from 'date-fns'
+import { format, getYear, addMonths, startOfDay, startOfMonth } from 'date-fns'
 import { useMergedState } from 'vooks'
 import { dateArray } from '../../date-picker/src/utils'
 import { ChevronLeftIcon, ChevronRightIcon } from '../../_internal/icons'
@@ -29,6 +21,7 @@ import { useConfig, useLocale, useTheme } from '../../_mixins'
 import type { ThemeProps } from '../../_mixins'
 import { calendarLight } from '../styles'
 import type { CalendarTheme } from '../styles'
+import type { OnUpdateValue, DateItem } from './interface'
 import style from './styles/index.cssr'
 
 const calendarProps = {
@@ -39,21 +32,11 @@ const calendarProps = {
     type: Number as PropType<number | null>,
     defualt: null
   },
-  'onUpdate:value': [Function, Array] as PropType<
-  MaybeArray<(value: number) => void>
-  >,
-  onUpdateValue: [Function, Array] as PropType<
-  MaybeArray<(value: number) => void>
-  >
+  'onUpdate:value': [Function, Array] as PropType<MaybeArray<OnUpdateValue>>,
+  onUpdateValue: [Function, Array] as PropType<MaybeArray<OnUpdateValue>>
 } as const
 
 export type CalendarProps = ExtractPublicPropTypes<typeof calendarProps>
-
-interface DateItem {
-  year: number
-  month: number
-  date: number
-}
 
 export default defineComponent({
   name: 'Calendar',
@@ -72,7 +55,7 @@ export default defineComponent({
     const now = Date.now()
     // ts => timestamp
     const monthTsRef = ref(startOfMonth(now).valueOf())
-    const uncontrolledValueRef = ref<number | null>(null)
+    const uncontrolledValueRef = ref<number | null>(props.defaultValue || null)
     const mergedValueRef = useMergedState(
       toRef(props, 'value'),
       uncontrolledValueRef
@@ -187,7 +170,6 @@ export default defineComponent({
     } = this
     const normalizedValue = mergedValue && startOfDay(mergedValue).valueOf()
     const localeMonth = format(monthTs, 'MMMM', { locale })
-    const month = getMonth(monthTs)
     const year = getYear(monthTs)
     const title = monthBeforeYear
       ? `${localeMonth} ${year}`
@@ -254,10 +236,11 @@ export default defineComponent({
         </div>
         <div class={`${mergedClsPrefix}-calendar-dates`}>
           {this.dateItems.map(
-            ({ ts, inCurrentMonth, isCurrentDate }, index) => {
+            ({ dateObject, ts, inCurrentMonth, isCurrentDate }, index) => {
+              const { year, month, date } = dateObject
+              const fullDate = format(ts, 'yyyy-MM-dd')
               const disabled = !inCurrentMonth || isDateDisabled?.(ts) === true
               const selected = normalizedValue === startOfDay(ts).valueOf()
-              const date = getDate(ts)
               return (
                 <div
                   key={isCurrentDate ? 'current' : index}
@@ -271,7 +254,7 @@ export default defineComponent({
                   onClick={() => {
                     this.doUpdateValue(ts, {
                       year,
-                      month,
+                      month: month + 1,
                       date
                     })
                     this.monthTs = startOfMonth(ts).valueOf()
@@ -281,6 +264,7 @@ export default defineComponent({
                     {disabled ? (
                       <div
                         class={`${mergedClsPrefix}-calendar-date__date`}
+                        title={fullDate}
                         key="disabled"
                       >
                         {date}
@@ -288,13 +272,17 @@ export default defineComponent({
                     ) : (
                       <div
                         class={`${mergedClsPrefix}-calendar-date__date`}
+                        title={fullDate}
                         key="available"
                       >
                         {date}
                       </div>
                     )}
                     {index < 7 && (
-                      <div class={`${mergedClsPrefix}-calendar-date__day`}>
+                      <div
+                        class={`${mergedClsPrefix}-calendar-date__day`}
+                        title={fullDate}
+                      >
                         {format(ts, 'EEE', {
                           locale
                         })}
@@ -303,7 +291,7 @@ export default defineComponent({
                   </div>
                   {renderSlot(this.$slots, 'default', {
                     year,
-                    month,
+                    month: month + 1,
                     date
                   })}
                   <div

@@ -16,24 +16,16 @@ type Align =
   | 'flex-end'
   | 'flex-start'
 
+type Justify = 'start' | 'end' | 'center' | 'space-around' | 'space-between'
 const spaceProps = {
   ...(useTheme.props as ThemeProps<SpaceTheme>),
-  align: {
-    type: String as PropType<Align>,
-    default: undefined
-  },
+  align: String as PropType<Align>,
   justify: {
-    type: String as PropType<'start' | 'end'>,
+    type: String as PropType<Justify>,
     default: 'start'
   },
-  inline: {
-    type: Boolean,
-    default: false
-  },
-  vertical: {
-    type: Boolean,
-    default: false
-  },
+  inline: Boolean,
+  vertical: Boolean,
   size: {
     type: [String, Number, Array] as PropType<
     'small' | 'medium' | 'large' | number | [number, number]
@@ -102,17 +94,22 @@ export default defineComponent({
     } = this
     const children = flatten(getSlot(this))
     const horizontalMargin = `${margin.horizontal}px`
+    const semiHorizontalMargin = `${margin.horizontal / 2}px`
     const verticalMargin = `${margin.vertical}px`
     const semiVerticalMargin = `${margin.vertical / 2}px`
     const lastIndex = children.length - 1
+    const isJustifySpace = justify.startsWith('space-')
     return (
       <div
+        role="none"
         class={`${mergedClsPrefix}-space`}
         style={{
           display: inline ? 'inline-flex' : 'flex',
           flexDirection: vertical ? 'column' : 'row',
-          flexWrap: !wrap ? 'nowrap' : 'wrap',
-          justifyContent: 'flex-' + justify,
+          justifyContent: ['start', 'end'].includes(justify)
+            ? 'flex-' + justify
+            : justify,
+          flexWrap: !wrap || vertical ? 'nowrap' : 'wrap',
           marginTop: vertical ? '' : `-${semiVerticalMargin}`,
           marginBottom: vertical ? '' : `-${semiVerticalMargin}`,
           alignItems: align
@@ -120,6 +117,7 @@ export default defineComponent({
       >
         {children.map((child, index) => (
           <div
+            role="none"
             style={[
               itemStyle as any,
               {
@@ -127,13 +125,24 @@ export default defineComponent({
               },
               vertical
                 ? {
-                  marginBottom: index !== lastIndex ? verticalMargin : ''
-                }
+                    marginBottom: index !== lastIndex ? verticalMargin : ''
+                  }
                 : {
-                  marginRight: index !== lastIndex ? horizontalMargin : '',
-                  paddingTop: semiVerticalMargin,
-                  paddingBottom: semiVerticalMargin
-                }
+                    marginRight: isJustifySpace
+                      ? justify === 'space-between' && index === lastIndex
+                        ? ''
+                        : semiHorizontalMargin
+                      : index !== lastIndex
+                        ? horizontalMargin
+                        : '',
+                    marginLeft: isJustifySpace
+                      ? justify === 'space-between' && index === 0
+                        ? ''
+                        : semiHorizontalMargin
+                      : '',
+                    paddingTop: semiVerticalMargin,
+                    paddingBottom: semiVerticalMargin
+                  }
             ]}
           >
             {child}

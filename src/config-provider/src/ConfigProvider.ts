@@ -6,7 +6,9 @@ import {
   PropType,
   provide,
   InjectionKey,
-  renderSlot
+  renderSlot,
+  ComputedRef,
+  markRaw
 } from 'vue'
 import { useMemo } from 'vooks'
 import { merge } from 'lodash-es'
@@ -18,17 +20,18 @@ import type {
   GlobalComponentConfig,
   GlobalIconConfig
 } from './interface'
-import type { ConfigProviderInjection } from './internal-interface'
+import type {
+  ConfigProviderInjection,
+  RtlProp,
+  RtlEnabledState
+} from './internal-interface'
 import { NDateLocale, NLocale } from '../../locales'
 
 export const configProviderInjectionKey: InjectionKey<ConfigProviderInjection> =
   Symbol('configProviderInjection')
 
 export const configProviderProps = {
-  abstract: {
-    type: Boolean,
-    default: false
-  },
+  abstract: Boolean,
   bordered: {
     type: Boolean as PropType<boolean | undefined>,
     default: undefined
@@ -37,6 +40,7 @@ export const configProviderProps = {
   locale: Object as PropType<NLocale | null>,
   dateLocale: Object as PropType<NDateLocale | null>,
   namespace: String,
+  rtl: Array as PropType<RtlProp>,
   tag: {
     type: String,
     default: 'div'
@@ -47,49 +51,10 @@ export const configProviderProps = {
   componentOptions: Object as PropType<GlobalComponentConfig>,
   icons: Object as PropType<GlobalIconConfig>,
   // deprecated
-  legacyTheme: String,
-  language: {
-    type: String as PropType<string | undefined>,
-    validator: () => {
-      warn(
-        'config-provider',
-        '`language` is deprecated, please use `locale` instead.'
-      )
-      return true
-    },
-    default: undefined
-  },
-  lang: {
-    type: String as PropType<string | undefined>,
-    validator: () => {
-      warn(
-        'config-provider',
-        '`lang` is deprecated, please use `locale` instead.'
-      )
-      return true
-    },
-    default: undefined
-  },
   as: {
     type: String as PropType<string | undefined>,
     validator: () => {
       warn('config-provider', '`as` is deprecated, please use `tag` instead.')
-      return true
-    },
-    default: undefined
-  },
-  themeEnvironment: {
-    type: Object as PropType<unknown | undefined>,
-    validator: () => {
-      warn('config-provider', '`theme-environment` is deprecated.')
-      return true
-    },
-    default: undefined
-  },
-  themeEnvironments: {
-    type: Object as PropType<unknown | undefined>,
-    validator: () => {
-      warn('config-provider', '`theme-environments` is deprecated.')
       return true
     },
     default: undefined
@@ -160,7 +125,21 @@ export default defineComponent({
       const { clsPrefix } = props
       return NConfigProvider?.mergedClsPrefixRef.value ?? clsPrefix
     })
+    const mergedRtlRef: ComputedRef<RtlEnabledState | undefined> = computed(
+      () => {
+        const { rtl } = props
+        if (rtl === undefined) {
+          return NConfigProvider?.mergedRtlRef.value
+        }
+        const rtlEnabledState: RtlEnabledState = {}
+        for (const rtlInfo of rtl) {
+          rtlEnabledState[rtlInfo.name] = markRaw(rtlInfo)
+        }
+        return rtlEnabledState
+      }
+    )
     provide(configProviderInjectionKey, {
+      mergedRtlRef,
       mergedIconsRef,
       mergedComponentPropsRef,
       mergedBorderedRef,
@@ -185,30 +164,7 @@ export default defineComponent({
         return hljs === undefined ? NConfigProvider?.mergedHljsRef.value : hljs
       }),
       mergedThemeRef,
-      mergedThemeOverridesRef,
-      // deprecated
-      mergedLegacyThemeRef: useMemo(() => {
-        const { legacyTheme } = props
-        return legacyTheme === undefined
-          ? NConfigProvider?.mergedLegacyThemeRef.value
-          : legacyTheme
-      }),
-      mergedLanguageRef: useMemo(() => {
-        const { language, lang } = props
-        return language === undefined
-          ? lang === undefined
-            ? NConfigProvider?.mergedLanguageRef.value
-            : lang
-          : language
-      }),
-      mergedThemeEnvironmentsRef: computed(() => {
-        const { themeEnvironments, themeEnvironment } = props
-        return themeEnvironments === undefined
-          ? themeEnvironment === undefined
-            ? NConfigProvider?.mergedThemeEnvironmentsRef.value
-            : themeEnvironment
-          : themeEnvironments
-      })
+      mergedThemeOverridesRef
     })
     return {
       mergedClsPrefix: mergedClsPrefixRef,

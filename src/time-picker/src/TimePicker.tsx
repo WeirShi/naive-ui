@@ -57,6 +57,20 @@ import {
   Size,
   timePickerInjectionKey
 } from './interface'
+import { happensIn } from 'seemly'
+import { isTimeInStep } from './utils'
+
+// validate hours, minutes, seconds prop
+function validateUnits (value: MaybeArray<number>, max: number): boolean {
+  if (value === undefined) {
+    return true
+  }
+  if (Array.isArray(value)) {
+    return value.every((v) => v >= 0 && v <= max)
+  } else {
+    return value >= 0 && value <= max
+  }
+}
 
 const timePickerProps = {
   ...(useTheme.props as ThemeProps<TimePickerTheme>),
@@ -65,6 +79,7 @@ const timePickerProps = {
     type: Boolean as PropType<boolean | undefined>,
     default: undefined
   },
+  actions: Array as PropType<Array<'now' | 'confirm'>>,
   defaultValue: {
     type: Number as PropType<number | null>,
     default: null
@@ -83,10 +98,7 @@ const timePickerProps = {
   size: String as PropType<Size>,
   isMinuteDisabled: Function as PropType<IsMinuteDisabled>,
   isSecondDisabled: Function as PropType<IsSecondDisabled>,
-  clearable: {
-    type: Boolean,
-    default: false
-  },
+  clearable: Boolean,
   // eslint-disable-next-line vue/prop-name-casing
   'onUpdate:value': [Function, Array] as PropType<MaybeArray<OnUpdateValue>>,
   onUpdateValue: [Function, Array] as PropType<MaybeArray<OnUpdateValue>>,
@@ -101,10 +113,7 @@ const timePickerProps = {
     type: Boolean,
     default: true
   },
-  disabled: {
-    type: Boolean,
-    default: false
-  },
+  disabled: Boolean,
   // deprecated
   onChange: {
     type: [Function, Array] as PropType<MaybeArray<OnUpdateValue> | undefined>,
@@ -118,6 +127,18 @@ const timePickerProps = {
       return true
     },
     default: undefined
+  },
+  hours: {
+    type: [Number, Array] as PropType<MaybeArray<number>>,
+    validator: (value: MaybeArray<number>) => validateUnits(value, 23)
+  },
+  minutes: {
+    type: [Number, Array] as PropType<MaybeArray<number>>,
+    validator: (value: MaybeArray<number>) => validateUnits(value, 59)
+  },
+  seconds: {
+    type: [Number, Array] as PropType<MaybeArray<number>>,
+    validator: (value: MaybeArray<number>) => validateUnits(value, 59)
   }
 }
 
@@ -127,9 +148,8 @@ export default defineComponent({
   name: 'TimePicker',
   props: timePickerProps,
   setup (props) {
-    const { mergedBorderedRef, mergedClsPrefixRef, namespaceRef } = useConfig(
-      props
-    )
+    const { mergedBorderedRef, mergedClsPrefixRef, namespaceRef } =
+      useConfig(props)
     const { localeRef, dateLocaleRef } = useLocale('TimePicker')
     const formItem = useFormItem(props)
     const themeRef = useTheme(
@@ -191,27 +211,30 @@ export default defineComponent({
     })
     const isHourInvalidRef = computed(() => {
       const { isHourDisabled } = props
-      if (!isHourDisabled) return false
       if (hourValueRef.value === null) return false
+      if (!isTimeInStep(hourValueRef.value, 'hours', props.hours)) return true
+      if (!isHourDisabled) return false
       return isHourDisabled(hourValueRef.value)
     })
     const isMinuteInvalidRef = computed(() => {
-      const { isMinuteDisabled } = props
-      if (!isMinuteDisabled) return false
       const { value: minuteValue } = minuteValueRef
       const { value: hourValue } = hourValueRef
       if (minuteValue === null || hourValue === null) return false
+      if (!isTimeInStep(minuteValue, 'minutes', props.minutes)) return true
+      const { isMinuteDisabled } = props
+      if (!isMinuteDisabled) return false
       return isMinuteDisabled(minuteValue, hourValue)
     })
     const isSecondInvalidRef = computed(() => {
-      const { isSecondDisabled } = props
-      if (!isSecondDisabled) return false
       const { value: minuteValue } = minuteValueRef
       const { value: hourValue } = hourValueRef
       const { value: secondValue } = secondValueRef
       if (secondValue === null || minuteValue === null || hourValue === null) {
         return false
       }
+      if (!isTimeInStep(secondValue, 'seconds', props.seconds)) return true
+      const { isSecondDisabled } = props
+      if (!isSecondDisabled) return false
       return isSecondDisabled(secondValue, minuteValue, hourValue)
     })
     const isValueInvalidRef = computed(() => {
@@ -298,6 +321,12 @@ export default defineComponent({
         transitionDisabledRef.value = false
       })
     }
+    function handleTriggerClick (e: MouseEvent): void {
+      if (props.disabled || happensIn(e, 'clear')) return
+      if (!activeRef.value) {
+        openPanel()
+      }
+    }
     function handleHourClick (hour: number): void {
       if (mergedValueRef.value === null) {
         doChange(getTime(setHours(startOfHour(new Date()), hour)))
@@ -362,11 +391,8 @@ export default defineComponent({
     }
     function scrollTimer (): void {
       if (!panelInstRef.value) return
-      const {
-        hourScrollRef,
-        minuteScrollRef,
-        secondScrollRef
-      } = panelInstRef.value
+      const { hourScrollRef, minuteScrollRef, secondScrollRef } =
+        panelInstRef.value
       if (hourScrollRef) {
         const hour = hourScrollRef.contentRef?.querySelector(
           '[data-active]'
@@ -537,6 +563,7 @@ export default defineComponent({
       handleTimeInputClear,
       handleFocusDetectorFocus,
       handleMenuKeyDown,
+      handleTriggerClick,
       mergedTheme: themeRef,
       triggerCssVars: computed(() => {
         const {
@@ -622,20 +649,21 @@ export default defineComponent({
                       onClear={this.handleTimeInputClear}
                       internalDeactivateOnEnter
                       internalForceFocus={this.active}
+                      onClick={this.handleTriggerClick}
                     >
                       {this.showIcon
                         ? {
-                          suffix: () => (
-                            <NBaseIcon
-                              clsPrefix={mergedClsPrefix}
-                              class={`${mergedClsPrefix}-time-picker-icon`}
-                            >
-                              {{
-                                default: () => <TimeIcon />
-                              }}
-                            </NBaseIcon>
-                          )
-                        }
+                            [this.clearable ? 'clear' : 'suffix']: () => (
+                              <NBaseIcon
+                                clsPrefix={mergedClsPrefix}
+                                class={`${mergedClsPrefix}-time-picker-icon`}
+                              >
+                                {{
+                                  default: () => <TimeIcon />
+                                }}
+                              </NBaseIcon>
+                            )
+                          }
                         : null}
                     </NInput>
                   )
@@ -658,37 +686,41 @@ export default defineComponent({
                         default: () =>
                           this.active
                             ? withDirectives(
-                              <Panel
-                                ref="panelInstRef"
-                                style={this.cssVars as CSSProperties}
-                                transitionDisabled={this.transitionDisabled}
-                                hourValue={this.hourValue}
-                                showHour={this.hourInFormat}
-                                isHourInvalid={this.isHourInvalid}
-                                isHourDisabled={this.isHourDisabled}
-                                minuteValue={this.minuteValue}
-                                showMinute={this.minuteInFormat}
-                                isMinuteInvalid={this.isMinuteInvalid}
-                                isMinuteDisabled={this.isMinuteDisabled}
-                                secondValue={this.secondValue}
-                                showSecond={this.secondInFormat}
-                                isSecondInvalid={this.isSecondInvalid}
-                                isSecondDisabled={this.isSecondDisabled}
-                                isValueInvalid={this.isValueInvalid}
-                                nowText={this.localizedNow}
-                                confirmText={this.localizedPositiveText}
-                                onFocusout={this.handleMenuFocusOut}
-                                onKeydown={this.handleMenuKeyDown}
-                                onHourClick={this.handleHourClick}
-                                onMinuteClick={this.handleMinuteClick}
-                                onSecondClick={this.handleSecondClick}
-                                onNowClick={this.handleNowClick}
-                                onConfirmClick={this.handleConfirmClick}
-                                onFocusDetectorFocus={
-                                  this.handleFocusDetectorFocus
-                                }
-                              />,
-                              [[clickoutside, this.handleClickOutside]]
+                                <Panel
+                                  ref="panelInstRef"
+                                  actions={this.actions}
+                                  style={this.cssVars as CSSProperties}
+                                  seconds={this.seconds}
+                                  minutes={this.minutes}
+                                  hours={this.hours}
+                                  transitionDisabled={this.transitionDisabled}
+                                  hourValue={this.hourValue}
+                                  showHour={this.hourInFormat}
+                                  isHourInvalid={this.isHourInvalid}
+                                  isHourDisabled={this.isHourDisabled}
+                                  minuteValue={this.minuteValue}
+                                  showMinute={this.minuteInFormat}
+                                  isMinuteInvalid={this.isMinuteInvalid}
+                                  isMinuteDisabled={this.isMinuteDisabled}
+                                  secondValue={this.secondValue}
+                                  showSecond={this.secondInFormat}
+                                  isSecondInvalid={this.isSecondInvalid}
+                                  isSecondDisabled={this.isSecondDisabled}
+                                  isValueInvalid={this.isValueInvalid}
+                                  nowText={this.localizedNow}
+                                  confirmText={this.localizedPositiveText}
+                                  onFocusout={this.handleMenuFocusOut}
+                                  onKeydown={this.handleMenuKeyDown}
+                                  onHourClick={this.handleHourClick}
+                                  onMinuteClick={this.handleMinuteClick}
+                                  onSecondClick={this.handleSecondClick}
+                                  onNowClick={this.handleNowClick}
+                                  onConfirmClick={this.handleConfirmClick}
+                                  onFocusDetectorFocus={
+                                    this.handleFocusDetectorFocus
+                                  }
+                                />,
+                                [[clickoutside, this.handleClickOutside]]
                             )
                             : null
                       }}

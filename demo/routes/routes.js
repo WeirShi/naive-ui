@@ -29,6 +29,10 @@ export const enDocRoutes = [
     component: () => import('../pages/docs/customize-theme/enUS/index.md')
   },
   {
+    path: 'i18n',
+    component: () => import('../pages/docs/i18n/enUS/index.md')
+  },
+  {
     path: 'changelog',
     component: () => import('../pages/docs/changelog/enUS/index.vue')
   },
@@ -83,6 +87,10 @@ export const zhDocRoutes = [
   {
     path: 'customize-theme',
     component: () => import('../pages/docs/customize-theme/zhCN/index.md')
+  },
+  {
+    path: 'i18n',
+    component: () => import('../pages/docs/i18n/zhCN/index.md')
   },
   // {
   //   path: 'experimental-features',
@@ -446,13 +454,14 @@ export const enComponentRoutes = [
     component: () =>
       import('../../src/color-picker/demos/enUS/index.demo-entry.md')
   },
-  // deprecated
   {
-    path: 'nimbus-service-layout',
+    path: 'tree-select',
     component: () =>
-      import(
-        '../pages/docs/deprecated/nimbus-service-layout/enUS/index.demo-entry.md'
-      )
+      import('../../src/tree-select/demos/enUS/index.demo-entry.md')
+  },
+  {
+    path: 'carousel',
+    component: () => import('../../src/carousel/demos/enUS/index.demo-entry.md')
   }
 ]
 
@@ -784,13 +793,14 @@ export const zhComponentRoutes = [
     component: () =>
       import('../../src/color-picker/demos/zhCN/index.demo-entry.md')
   },
-  // deprecated
   {
-    path: 'nimbus-service-layout',
+    path: 'tree-select',
     component: () =>
-      import(
-        '../pages/docs/deprecated/nimbus-service-layout/zhCN/index.demo-entry.md'
-      )
+      import('../../src/tree-select/demos/zhCN/index.demo-entry.md')
+  },
+  {
+    path: 'carousel',
+    component: () => import('../../src/carousel/demos/zhCN/index.demo-entry.md')
   }
 ]
 

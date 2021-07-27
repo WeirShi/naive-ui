@@ -67,12 +67,12 @@ const drawerProps = {
     type: [Object, String] as PropType<CSSProperties | string | undefined>,
     validator: __DEV__
       ? () => {
-        warn(
-          'drawer',
-          '`drawer-style` is deprecated, please use `style` instead.'
-        )
-        return true
-      }
+          warn(
+            'drawer',
+            '`drawer-style` is deprecated, please use `style` instead.'
+          )
+          return true
+        }
       : undefined,
     default: undefined
   },
@@ -81,21 +81,21 @@ const drawerProps = {
     type: String as PropType<string | undefined>,
     validator: __DEV__
       ? () => {
-        warn(
-          'drawer',
-          '`drawer-class` is deprecated, please use `class` instead.'
-        )
-        return true
-      }
+          warn(
+            'drawer',
+            '`drawer-class` is deprecated, please use `class` instead.'
+          )
+          return true
+        }
       : undefined,
     default: undefined
   },
   target: {
     validator: __DEV__
       ? () => {
-        warn('drawer', '`target` is deprecated, please use `to` instead.')
-        return true
-      }
+          warn('drawer', '`target` is deprecated, please use `to` instead.')
+          return true
+        }
       : undefined,
     default: undefined
   },
@@ -167,17 +167,21 @@ export default defineComponent({
     })
     function handleMaskClick (): void {
       if (props.maskClosable) {
-        const { onHide, onUpdateShow, 'onUpdate:show': _onUpdateShow } = props
-        if (onUpdateShow) call(onUpdateShow, false)
-        if (_onUpdateShow) call(_onUpdateShow, false)
-        // deprecated
-        if (onHide) call(onHide, false)
+        doUpdateShow(false)
       }
+    }
+    function doUpdateShow (show: boolean): void {
+      const { onHide, onUpdateShow, 'onUpdate:show': _onUpdateShow } = props
+      if (onUpdateShow) call(onUpdateShow, show)
+      if (_onUpdateShow) call(_onUpdateShow, show)
+      // deprecated
+      if (onHide && !show) call(onHide, show)
     }
     provide(drawerInjectionKey, {
       isMountedRef: isMountedRef,
       mergedThemeRef: themeRef,
-      mergedClsPrefixRef
+      mergedClsPrefixRef,
+      doUpdateShow
     })
     return {
       mergedClsPrefix: mergedClsPrefixRef,
@@ -204,7 +208,11 @@ export default defineComponent({
             titleTextColor,
             titleFontWeight,
             headerBorderBottom,
-            footerBorderTop
+            footerBorderTop,
+            closeColor,
+            closeColorHover,
+            closeColorPressed,
+            closeSize
           }
         } = themeRef.value
         return {
@@ -222,7 +230,11 @@ export default defineComponent({
           '--title-font-size': titleFontSize,
           '--title-font-weight': titleFontWeight,
           '--header-border-bottom': headerBorderBottom,
-          '--footer-border-top': footerBorderTop
+          '--footer-border-top': footerBorderTop,
+          '--close-color': closeColor,
+          '--close-color-hover': closeColorHover,
+          '--close-color-pressed': closeColorPressed,
+          '--close-size': closeSize
         }
       }),
       isMounted: isMountedRef

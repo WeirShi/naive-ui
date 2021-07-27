@@ -1,6 +1,6 @@
 # Element
 
-Element has many CSS variables provided by Naive UI.
+Element has many theme variables provided by Naive UI.
 
 ## Demos
 
@@ -16,6 +16,6 @@ basic
 
 ## Slots
 
-| Name    | Parameters | Description |
-| ------- | ---------- | ----------- |
-| default | `()`       |             |
+| Name    | Parameters | Description                 |
+| ------- | ---------- | --------------------------- |
+| default | `()`       | The content of the element. |

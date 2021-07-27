@@ -1,4 +1,4 @@
-import { cB, cM, cE } from '../../../_utils/cssr'
+import { c, cB, cM, cE, cNotM } from '../../../_utils/cssr'
 import fadeInScaleUpTransition from '../../../_styles/transitions/fade-in-scale-up.cssr'
 
 // vars:
@@ -6,7 +6,6 @@ import fadeInScaleUpTransition from '../../../_styles/transitions/fade-in-scale-
 // --font-size
 // --padding
 // --border-radius
-// --box-shadow
 // --option-height
 // --option-prefix-width
 // --option-icon-prefix-width
@@ -23,6 +22,11 @@ import fadeInScaleUpTransition from '../../../_styles/transitions/fade-in-scale-
 // --prefix-color
 // --suffix-color
 // --option-icon-size
+// --option-opacity-disabled
+
+// shared with popover
+// --box-shadow
+
 export default cB('dropdown-menu', `
   transform-origin: inherit;
   padding: var(--padding);
@@ -37,6 +41,19 @@ export default cB('dropdown-menu', `
   cB('dropdown-option', {
     position: 'relative'
   }, [
+    c('a', `
+      text-decoration: none;
+      color: inherit;
+    `, [
+      c('&::before', `
+        content: "",
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+      `)
+    ]),
     cB('dropdown-option-body', `
       display: flex;
       cursor: pointer;
@@ -49,9 +66,11 @@ export default cB('dropdown-menu', `
         color .3s var(--bezier);
     `, [
       cM('pending', {
-        color: 'var(--option-text-color-hover)',
-        backgroundColor: 'var(--option-color-hover)'
+        color: 'var(--option-text-color-hover)'
       }, [
+        cNotM('disabled', {
+          backgroundColor: 'var(--option-color-hover)'
+        }),
         cE('prefix, suffix', {
           color: 'var(--option-text-color-hover)'
         })
@@ -64,6 +83,10 @@ export default cB('dropdown-menu', `
           color: 'var(--option-text-color-active)'
         })
       ]),
+      cM('disabled', {
+        cursor: 'not-allowed',
+        opacity: 'var(--option-opacity-disabled)'
+      }),
       cM('child-active', {
         color: 'var(--option-text-color-child-active)'
       }, [

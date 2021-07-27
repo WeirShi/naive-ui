@@ -28,6 +28,7 @@ import type { ButtonTheme } from '../styles'
 import { buttonGroupInjectionKey } from './ButtonGroup'
 import type { Type, Size } from './interface'
 import style from './styles/button.cssr'
+import useRtl from '../../_mixins/use-rtl'
 
 const buttonProps = {
   ...(useTheme.props as ThemeProps<ButtonTheme>),
@@ -134,6 +135,7 @@ const Button = defineComponent({
     const handleKeyUp = (e: KeyboardEvent): void => {
       switch (e.code) {
         case 'Enter':
+        case 'NumpadEnter':
           if (!props.keyboard) {
             e.preventDefault()
             return
@@ -149,6 +151,7 @@ const Button = defineComponent({
     const handleKeyDown = (e: KeyboardEvent): void => {
       switch (e.code) {
         case 'Enter':
+        case 'NumpadEnter':
           if (!props.keyboard) return
           e.preventDefault()
           enterPressedRef.value = true
@@ -157,13 +160,18 @@ const Button = defineComponent({
     const handleBlur = (): void => {
       enterPressedRef.value = false
     }
-    const { mergedClsPrefixRef } = useConfig(props)
+    const { mergedClsPrefixRef, NConfigProvider } = useConfig(props)
     const themeRef = useTheme(
       'Button',
       'Button',
       style,
       buttonLight,
       props,
+      mergedClsPrefixRef
+    )
+    const rtlEnabledRef = useRtl(
+      'Button',
+      NConfigProvider?.mergedRtlRef,
       mergedClsPrefixRef
     )
     return {
@@ -174,6 +182,7 @@ const Button = defineComponent({
       mergedSize: mergedSizeRef,
       showBorder: showBorderRef,
       enterPressed: enterPressedRef,
+      rtlEnabled: rtlEnabledRef,
       handleMouseDown,
       handleKeyDown,
       handleBlur,
@@ -390,6 +399,7 @@ const Button = defineComponent({
           `${mergedClsPrefix}-button`,
           `${mergedClsPrefix}-button--${this.type}-type`,
           {
+            [`${mergedClsPrefix}-button--rtl`]: this.rtlEnabled,
             [`${mergedClsPrefix}-button--disabled`]: this.disabled,
             [`${mergedClsPrefix}-button--block`]: this.block,
             [`${mergedClsPrefix}-button--pressed`]: this.enterPressed,
@@ -429,7 +439,7 @@ const Button = defineComponent({
                             clsPrefix={mergedClsPrefix}
                             key="loading"
                             class={`${mergedClsPrefix}-icon-slot`}
-                            strokeWidth={24}
+                            strokeWidth={20}
                           />
                         ) : (
                           <div

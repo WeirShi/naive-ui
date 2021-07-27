@@ -5,15 +5,13 @@
 ```html
 <n-space>
   <n-dropdown @select="handleSelect" trigger="hover" :options="options">
-    <n-button :keyboard="false">悬浮！</n-button>
+    <n-button>悬浮！</n-button>
   </n-dropdown>
   <n-dropdown @select="handleSelect" trigger="click" :options="options">
-    <n-button :keyboard="false">点击！</n-button>
+    <n-button>点击！</n-button>
   </n-dropdown>
   <n-dropdown @select="handleSelect" :show="showDropdown" :options="options">
-    <n-button :keyboard="false" @click="handleClick"
-      >噢！我要自己手动！</n-button
-    >
+    <n-button @click="handleClick">噢！我要自己手动！</n-button>
   </n-dropdown>
 </n-space>
 ```
@@ -30,7 +28,8 @@ export default defineComponent({
       options: [
         {
           label: '滨海湾金沙，新加坡',
-          key: 'marina bay sands'
+          key: 'marina bay sands',
+          disabled: true
         },
         {
           label: '布朗酒店，伦敦',

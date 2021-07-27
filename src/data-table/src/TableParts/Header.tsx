@@ -51,8 +51,9 @@ export default defineComponent({
       mergedSortStateRef,
       componentId,
       scrollPartRef,
-      tableLayoutRef,
-      handleTableBodyScroll,
+      mergedTableLayoutRef,
+      headerCheckboxDisabledRef,
+      handleTableHeaderScroll,
       doUpdateSorter,
       doUncheckAll,
       doCheckAll
@@ -92,11 +93,12 @@ export default defineComponent({
       cols: colsRef,
       mergedTheme: mergedThemeRef,
       checkOptions: checkOptionsRef,
-      tableLayout: tableLayoutRef,
+      mergedTableLayout: mergedTableLayoutRef,
+      headerCheckboxDisabled: headerCheckboxDisabledRef,
       handleMouseenter,
       handleCheckboxUpdateChecked,
       handleColHeaderClick,
-      handleTableBodyScroll
+      handleTableHeaderScroll
     }
   },
   render () {
@@ -114,6 +116,8 @@ export default defineComponent({
       checkOptions,
       componentId,
       discrete,
+      mergedTableLayout,
+      headerCheckboxDisabled,
       handleColHeaderClick,
       handleCheckboxUpdateChecked
     } = this
@@ -149,12 +153,10 @@ export default defineComponent({
                         [`${mergedClsPrefix}-data-table-th--hover`]:
                           mergedSortState?.order &&
                           mergedSortState.columnKey === key,
-                        [`${mergedClsPrefix}-data-table-th--filterable`]: isColumnFilterable(
-                          column
-                        ),
-                        [`${mergedClsPrefix}-data-table-th--sortable`]: isColumnSortable(
-                          column
-                        ),
+                        [`${mergedClsPrefix}-data-table-th--filterable`]:
+                          isColumnFilterable(column),
+                        [`${mergedClsPrefix}-data-table-th--sortable`]:
+                          isColumnSortable(column),
                         [`${mergedClsPrefix}-data-table-th--selection`]:
                           column.type === 'selection',
                         [`${mergedClsPrefix}-data-table-th--last`]: isLast
@@ -166,8 +168,8 @@ export default defineComponent({
                       column.type !== 'expand' &&
                       !('children' in column)
                         ? (e) => {
-                          handleColHeaderClick(e, column)
-                        }
+                            handleColHeaderClick(e, column)
+                          }
                         : undefined
                     }
                   >
@@ -178,6 +180,7 @@ export default defineComponent({
                           privateTableHeader
                           checked={allRowsChecked}
                           indeterminate={someRowsChecked}
+                          disabled={headerCheckboxDisabled}
                           onUpdateChecked={handleCheckboxUpdateChecked}
                         />
                         {checkOptions ? (
@@ -190,15 +193,15 @@ export default defineComponent({
                       </div>
                     ) // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
                       : ellipsis && ellipsis.tooltip ? (
-                        <NEllipsis
-                          tooltip={ellipsis.tooltip}
-                          theme={mergedTheme.peers.Ellipsis}
-                          themeOverrides={mergedTheme.peerOverrides.Ellipsis}
-                        >
-                          {{
-                            default: () => renderTitle(column)
-                          }}
-                        </NEllipsis>
+                      <NEllipsis
+                        tooltip={ellipsis.tooltip}
+                        theme={mergedTheme.peers.Ellipsis}
+                        themeOverrides={mergedTheme.peerOverrides.Ellipsis}
+                      >
+                        {{
+                          default: () => renderTitle(column)
+                        }}
+                      </NEllipsis>
                       ) : (
                         renderTitle(column)
                       )}
@@ -222,11 +225,11 @@ export default defineComponent({
     if (!discrete) {
       return theadVNode
     }
-    const { handleTableBodyScroll, handleMouseenter, scrollX } = this
+    const { handleTableHeaderScroll, handleMouseenter, scrollX } = this
     return (
       <div
         class={`${mergedClsPrefix}-data-table-base-table-header`}
-        onScroll={handleTableBodyScroll}
+        onScroll={handleTableHeaderScroll}
         onMouseenter={handleMouseenter}
       >
         <table
@@ -234,7 +237,7 @@ export default defineComponent({
           class={`${mergedClsPrefix}-data-table-table`}
           style={{
             minWidth: formatLength(scrollX),
-            tableLayout: discrete || hasEllipsis ? 'fixed' : this.tableLayout
+            tableLayout: mergedTableLayout
           }}
         >
           <colgroup>

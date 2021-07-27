@@ -4,7 +4,7 @@
 
 ```html
 <n-dropdown trigger="hover" @select="handleSelect" :options="options">
-  <n-button :keyboard="false">找个地方休息</n-button>
+  <n-button>找个地方休息</n-button>
 </n-dropdown>
 ```
 
@@ -19,7 +19,8 @@ export default defineComponent({
       options: [
         {
           label: '滨海湾金沙，新加坡',
-          key: 'marina bay sands'
+          key: 'marina bay sands',
+          disabled: true
         },
         {
           label: '布朗酒店，伦敦',

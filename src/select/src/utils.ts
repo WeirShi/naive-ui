@@ -10,7 +10,7 @@ export function getKey (option: SelectMixedOption): string | number {
   if (getIsGroup(option)) {
     return (
       ((option as SelectGroupOption).name as any) ||
-      option.value ||
+      (option as SelectGroupOption).key ||
       'key-required'
     )
   }
@@ -91,4 +91,17 @@ export function createValOptMap (
     }
   })
   return valOptMap
+}
+
+export function defaultFilter (
+  pattern: string,
+  option: SelectBaseOption
+): boolean {
+  if (!option) return false
+  if (typeof option.label === 'string') {
+    return patternMatched(pattern, option.label)
+  } else if (option.value !== undefined) {
+    return patternMatched(pattern, String(option.value))
+  }
+  return false
 }
